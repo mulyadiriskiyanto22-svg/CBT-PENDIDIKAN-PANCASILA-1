@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CBT PANCASILA01 - Asesmen Sumatif Pendidikan Pancasila (Bab 1)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 font-sans flex flex-col">
+
+  <header class="bg-indigo-700 text-white shadow-lg py-4 px-6 flex justify-between items-center sticky top-0 z-50">
+    <div class="flex items-center space-x-3">
+      <span class="text-2xl">📚</span>
+      <div>
+        <h1 class="text-lg md:text-xl font-bold leading-tight">CBT PANCASILA01</h1>
+        <p class="text-xs text-indigo-200">Asesmen Sumatif: Pendidikan Pancasila (Satu Kesatuan Utuh Nilai-Nilai Pancasila)</p>
+      </div>
+    </div>
+    <div class="space-x-2 flex">
+      <span id="status-server" class="hidden sm:inline-flex items-center gap-1 bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold border border-indigo-400">
+        <span id="dot-server" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+        <span id="text-server">Cek server…</span>
+      </span>
+      <button onclick="switchView('login')" class="bg-indigo-600 hover:bg-indigo-800 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition border border-indigo-400">🔑 Ruang Ujian</button>
+      <button onclick="bukaModalPasswordAdmin()" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition shadow-sm">⚙️ Panel Admin</button>
+    </div>
+  </header>
+
+  <div id="status-kecurangan-bar" class="hidden bg-rose-600 text-white text-xs font-bold py-2 px-4 text-center sticky top-[68px] z-40 shadow-md flex justify-between items-center">
+    <span>⚠️ Mode Ujian Dilindungi (Anti-Screenshot & Deteksi Tab Aktif)</span>
+    <span class="bg-rose-800 px-2.5 py-1 rounded-full border border-rose-400">Pelanggaran: <strong id="count-pelanggaran">0</strong> / 2</span>
+  </div>
+
+  <main class="container mx-auto p-4 md:p-6 flex-grow select-none">
+
+    <!-- LOGIN -->
+    <section id="view-login" class="max-w-md mx-auto bg-white p-6 md:p-8 rounded-2xl shadow-xl border border-slate-200 mt-6 space-y-6">
+      <div class="text-center space-y-2 border-b pb-4">
+        <div class="w-16 h-16 bg-indigo-100 text-indigo-700 rounded-2xl flex items-center justify-center mx-auto text-3xl font-bold shadow-inner">📝</div>
+        <h2 class="text-2xl font-extrabold text-slate-800">Masuk Peserta Ujian</h2>
+        <p class="text-slate-500 text-sm">Masukkan ID dan Nama Anda</p>
+      </div>
+      <form id="form-login-peserta" onsubmit="handleLoginPeserta(event)" class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold mb-1 text-slate-700">ID Peserta</label>
+          <input type="text" id="login-id" required placeholder="Contoh: PP 01001" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none uppercase">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold mb-1 text-slate-700">Nama Lengkap</label>
+          <input type="text" id="login-nama" required placeholder="Nama Siswa" class="w-full border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl shadow-lg transition">🚀 Mulai Ujian PANCASILA01</button>
+      </form>
+      <div class="text-center pt-2">
+        <p class="text-xs text-slate-400">Peserta terdaftar: <strong id="login-count-peserta" class="text-indigo-600">0</strong> siswa</p>
+      </div>
+    </section>
+
+    <!-- MODAL AUTH ADMIN -->
+    <div id="modal-auth-admin" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-[60] flex items-center justify-center p-4">
+      <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 border border-slate-100">
+        <div class="text-center mb-5">
+          <div class="w-14 h-14 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-2xl mb-2">🔒</div>
+          <h3 class="font-bold text-xl text-slate-800">Akses Panel Admin</h3>
+          <p class="text-slate-500 text-xs mt-1">Masukkan password khusus admin</p>
+        </div>
+        <form onsubmit="verifikasiPasswordAdmin(event)" class="space-y-4" autocomplete="off">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Password Admin</label>
+            <div class="relative">
+              <input type="password" id="input-password-admin" placeholder="6 digit angka" required autocomplete="new-password"
+                inputmode="numeric" maxlength="6"
+                class="w-full border border-slate-300 rounded-xl p-3 text-center tracking-widest font-bold text-lg focus:ring-2 focus:ring-amber-500 focus:outline-none pr-12">
+              <button type="button" onclick="toggleAdminPassword()" id="btn-toggle-pass" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-lg px-2">👁️</button>
+            </div>
+          </div>
+          <div class="flex gap-2 pt-2">
+            <button type="button" onclick="tutupModalPasswordAdmin()" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl text-sm transition">Batal</button>
+            <button type="submit" class="w-1/2 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-xl text-sm shadow-md transition">🔓 Masuk Admin</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- PANEL ADMIN -->
+    <section id="view-admin" class="hidden space-y-6">
+      <div class="flex flex-wrap justify-between items-center gap-2 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <div>
+          <h2 class="text-xl font-bold text-slate-800">⚙️ Control Panel Guru / Admin</h2>
+          <p class="text-xs text-slate-500">Data terpusat di Google Sheets (Fallback otomatis ke penyimpanan lokal jika offline).</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="muatPesertaDefaultCSV()" class="text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-3 py-2 rounded-lg border border-emerald-200 font-bold">📥 Muat 32 Peserta Default</button>
+          <button onclick="bukaModalEditSoal()" class="text-xs bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-3 py-2 rounded-lg border border-indigo-200 font-bold">✏️ Edit Soal</button>
+          <button onclick="refreshAdminData()" class="text-xs bg-sky-50 text-sky-700 hover:bg-sky-100 px-3 py-2 rounded-lg border border-sky-200 font-bold">🔄 Refresh</button>
+          <button onclick="resetSemuaData()" class="text-xs bg-rose-50 text-rose-600 hover:bg-rose-100 px-3 py-2 rounded-lg border border-rose-200 font-semibold">🗑️ Reset</button>
+          <button onclick="logoutAdmin()" class="text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 px-3 py-2 rounded-lg border border-slate-200 font-semibold">🚪 Keluar</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-200 space-y-4">
+          <h3 class="font-bold text-base text-slate-800 border-b pb-2">👤 Tambah / Edit Peserta</h3>
+          <form id="form-tambah-peserta" onsubmit="tambahPeserta(event)" class="space-y-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">ID Peserta</label>
+              <input type="text" id="admin-id" placeholder="Misal: PP 01033" required class="w-full border p-2.5 rounded-lg border-slate-300 text-sm uppercase">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Siswa</label>
+              <input type="text" id="admin-nama" placeholder="Nama Lengkap" required class="w-full border p-2.5 rounded-lg border-slate-300 text-sm">
+            </div>
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg text-sm transition">+ Tambah / Update</button>
+          </form>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-200 space-y-4">
+          <h3 class="font-bold text-base text-slate-800 border-b pb-2">📂 Import Peserta Kolektif</h3>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Upload File Excel/CSV</label>
+            <input type="file" id="file-excel-peserta" accept=".xlsx,.xls,.csv" onchange="handleUploadExcel(event)"
+              class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 border border-slate-200 rounded-lg p-1">
+          </div>
+          <div class="relative flex py-1 items-center">
+            <div class="flex-grow border-t border-slate-200"></div>
+            <span class="flex-shrink mx-2 text-slate-400 text-xs">atau Paste CSV</span>
+            <div class="flex-grow border-t border-slate-200"></div>
+          </div>
+          <textarea id="paste-peserta" rows="3" placeholder="PP 01001, ABDILLAH YANN ADABY&#10;PP 01002, AHMAD MADED SYAFI" class="w-full border border-slate-300 rounded-lg p-2 text-xs font-mono"></textarea>
+          <button onclick="prosesPastePeserta()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-lg text-xs transition">📥 Import Teks</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-200">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-slate-800">Daftar Peserta (<span id="count-peserta">0</span>)</h3>
+            <button onclick="hapusSemuaPeserta()" class="text-xs text-rose-600 hover:underline">Hapus Semua</button>
+          </div>
+          <div class="overflow-y-auto max-h-72 border border-slate-100 rounded-lg">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-slate-100 sticky top-0"><tr class="border-b"><th class="p-2.5">ID</th><th class="p-2.5">Nama</th><th class="p-2.5 text-center">Aksi</th></tr></thead>
+              <tbody id="tabel-peserta"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-200 flex flex-col justify-between">
+          <div>
+            <div class="flex flex-wrap justify-between items-center gap-2 mb-4">
+              <h3 class="font-bold text-slate-800">Rekap Hasil Ujian</h3>
+              <div class="flex gap-2">
+                <button onclick="exportHasilKeExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-lg shadow-sm">📊 Excel</button>
+                <button onclick="hapusSemuaHasil()" class="bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold px-2.5 py-2 rounded-lg border border-rose-200">🗑️ Reset</button>
+              </div>
+            </div>
+            <div class="overflow-y-auto max-h-72 border border-slate-100 rounded-lg">
+              <table class="w-full text-left text-sm">
+                <thead class="bg-slate-100 sticky top-0"><tr class="border-b"><th class="p-2.5">ID</th><th class="p-2.5">Nama</th><th class="p-2.5 text-center">Skor</th><th class="p-2.5 text-center">Waktu</th><th class="p-2.5 text-center">Aksi</th></tr></thead>
+                <tbody id="tabel-hasil"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODAL EDIT SOAL -->
+    <div id="modal-edit-soal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-[60] flex items-center justify-center p-4">
+      <div class="bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div class="bg-indigo-700 text-white p-4 flex justify-between items-center">
+          <h3 class="font-bold text-lg">✏️ Kelola & Edit Soal</h3>
+          <button onclick="tutupModalEditSoal()" class="text-white hover:bg-indigo-600 px-3 py-1 rounded-lg font-bold text-sm">✕</button>
+        </div>
+        <div class="p-6 overflow-y-auto space-y-6 flex-grow">
+          <div class="flex gap-4 items-center">
+            <label class="text-sm font-bold text-slate-700">Pilih Nomor Soal:</label>
+            <select id="select-nomor-soal" onchange="muatFormEditorSoal()" class="border border-slate-300 rounded-lg p-2 text-sm font-bold text-indigo-700"></select>
+          </div>
+          <form id="form-editor-soal" onsubmit="simpanPerubahanSoal(event)" class="space-y-4 border-t pt-4">
+            <div id="container-edit-stimulus">
+              <label class="block text-xs font-bold text-slate-700 mb-1">Stimulus Teks / Bacaan</label>
+              <textarea id="edit-stimulus-soal" rows="4" class="w-full border p-2.5 rounded-xl text-sm border-amber-300 bg-amber-50"></textarea>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Butir Pertanyaan / Instruksi</label>
+              <textarea id="edit-teks-soal" rows="3" class="w-full border p-2.5 rounded-xl text-sm border-slate-300"></textarea>
+            </div>
+            <div id="container-edit-opsi" class="space-y-2">
+              <label class="block text-xs font-bold text-slate-700">Pilihan / Pernyataan</label>
+              <div id="wrapper-opsi-inputs" class="space-y-2"></div>
+            </div>
+            <div class="pt-4 border-t flex justify-between items-center">
+              <button type="button" onclick="resetSoalDefault()" class="text-xs text-rose-600 hover:underline">Reset ke Default (PANCASILA01)</button>
+              <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm shadow-md">💾 Simpan</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- UJIAN -->
+    <section id="view-exam" class="hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div class="lg:col-span-3 bg-white p-6 rounded-2xl shadow-md border border-slate-200 flex flex-col justify-between min-h-[550px]">
+          <div>
+            <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-4 mb-4">
+              <div>
+                <span id="label-nomor" class="font-bold text-lg text-indigo-700 block">Soal 1 dari 30</span>
+                <span id="label-tipe" class="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-semibold">Pilihan Ganda</span>
+              </div>
+              <div class="text-right flex items-center gap-2">
+                <span id="badge-warning-pindah" class="bg-amber-100 text-amber-800 border border-amber-300 px-2.5 py-1 rounded-full font-bold text-xs">Pindah Layar: 0/2</span>
+                <span id="timer" class="bg-rose-100 text-rose-700 px-3 py-1.5 rounded-full font-mono font-bold text-sm shadow-inner">Sisa Waktu: 60:00</span>
+              </div>
+            </div>
+            <div id="soal-container" class="space-y-4 select-none"></div>
+          </div>
+          <div class="flex justify-between items-center border-t pt-4 mt-6">
+            <button onclick="prevSoal()" id="btn-prev" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-5 py-2.5 rounded-xl font-semibold disabled:opacity-50 transition">← Sebelumnya</button>
+            <button onclick="nextSoal()" id="btn-next" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-semibold shadow-md">Berikutnya →</button>
+            <button onclick="konfirmasiSelesai()" id="btn-finish" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl font-semibold shadow-md">✅ Kirim Jawaban</button>
+          </div>
+        </div>
+        <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-200 h-fit space-y-4">
+          <div class="border-b pb-2">
+            <h3 class="font-bold text-slate-800">Navigasi Soal</h3>
+            <p class="text-xs text-slate-400">Klik nomor untuk melompat</p>
+          </div>
+          <div id="grid-navigasi" class="grid grid-cols-5 gap-2"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HASIL -->
+    <section id="view-result" class="hidden max-w-lg mx-auto bg-white p-8 rounded-2xl shadow-xl border border-slate-200 text-center space-y-4 mt-8">
+      <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner">🎉</div>
+      <h2 class="text-2xl font-bold text-slate-800">Ujian Telah Selesai!</h2>
+      <p id="teks-hasil" class="text-slate-600 text-sm"></p>
+      <div class="bg-gradient-to-br from-indigo-50 to-slate-50 p-6 rounded-2xl border border-indigo-100 shadow-sm">
+        <span class="text-xs text-slate-500 uppercase tracking-wider font-bold">Skor Akhir</span>
+        <div id="nilai-akhir" class="text-6xl font-extrabold text-indigo-700 my-2">0</div>
+        <div id="predikat-akhir" class="inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800"></div>
+      </div>
+      <button onclick="switchView('login')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold shadow-md">Kembali</button>
+    </section>
+
+  </main>
+
+ <script>
+    // Ganti API_URL dengan Web App URL Google Apps Script Spreadsheet Database CBT Pendidikan Pancasila Bab 1 Anda
+    const API_URL = 'https://script.google.com/a/macros/guru.sd.belajar.id/s/AKfycbxINRFQIu1uvISIN6sYb7BPLvk-MwOUHh0-b2J_jDSxxfVFwXMKrRepGQOzeOtrFAfw0g/exec';
+    const PASSWORD_ADMIN = '121985';
+    let adminPassword = '';
+    let isServerOnline = false;
+
+    const STORAGE_KEYS = {
+      PESERTA: 'cbt_pancasila01_peserta',
+      SOAL: 'cbt_pancasila01_soal',
+      HASIL: 'cbt_pancasila01_hasil'
+    };
+
+    async function apiFetch(action, params = {}) {
+      const payload = { action, ...params };
+      if (adminPassword) payload.adminPassword = adminPassword;
+      let res;
+      try {
+        res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+      } catch (netErr) { throw new Error('Tidak bisa hubungi server. Pastikan koneksi internet aktif.'); }
+      const text = await res.text();
+      let data;
+      try { data = JSON.parse(text); } catch(e) { throw new Error('Format respons server tidak valid.'); }
+      if (data.error) throw new Error(data.error);
+      return data;
+    }
+
+    // ============================================================
+    // DATA DEFAULT SOAL & PESERTA (DARI SPREADSHEET DATABASE CBT PENDIDIKAN PANCASILA BAB 1)
+    // ============================================================
+    const defaultSoal = [
+      {
+        "id": 1,
+        "tipe": "pg",
+        "stimulus": "[STIMULUS TEKS 1 & BAGAN 1 — Untuk Soal No. 1 s.d. 3]\nPerhatikan Bagan 1 di bawah ini dan bacalah teks berikut dengan cermat!\n\nSatu Kesatuan Utuh Nilai-Nilai Pancasila\nPancasila bukanlah lima sila yang berdiri sendiri-sendiri, melainkan satu kesatuan organis yang saling menjiwai dan meliputi. Sila pertama, Ketuhanan Yang Maha Esa, menjadi landasan moral dan spiritual yang menjiwai keempat sila di bawahnya. Keyakinan kepada Tuhan Yang Maha Esa mendorong manusia untuk memperlakukan sesama secara adil dan beradab (Sila ke-2), menjaga persatuan di tengah keberagaman (Sila ke-3), mengutamakan musyawarah mufakat dalam mengambil keputusan bersama (Sila ke-4), serta mewujudkan kesejahteraan yang merata bagi seluruh rakyat Indonesia (Sila ke-5).",
+        "teks": "Berdasarkan Bagan 1 dan teks di atas, mengapa Sila Ketuhanan Yang Maha Esa ditempatkan di bagian paling atas dan dihubungkan dengan anak panah menuju Sila ke-2, ke-3, dan ke-4?",
+        "opsi": [
+          "Karena Sila pertama hanya berlaku pada kegiatan keagamaan di tempat ibadah, sedangkan sila lainnya berlaku di masyarakat.",
+          "Karena nilai ketuhanan menjadi sumber moral utama yang menjiwai dan melandasi pengamalan kemanusiaan, persatuan, dan kerakyatan.",
+          "Karena Sila pertama memiliki jumlah butir pengamalan yang paling sedikit dibandingkan sila-sila berikutnya.",
+          "Karena Sila kelima tidak memiliki hubungan langsung dengan keyakinan terhadap Tuhan Yang Maha Esa."
+        ],
+        "kunci": 1,
+        "bobot": 2
+      },
+      {
+        "id": 2,
+        "tipe": "pg",
+        "stimulus": "[STIMULUS TEKS 1 & BAGAN 1 — Untuk Soal No. 1 s.d. 3]\nPerhatikan Bagan 1 di bawah ini dan bacalah teks berikut dengan cermat!\n\nSatu Kesatuan Utuh Nilai-Nilai Pancasila\nPancasila bukanlah lima sila yang berdiri sendiri-sendiri, melainkan satu kesatuan organis yang saling menjiwai dan meliputi. Sila pertama, Ketuhanan Yang Maha Esa, menjadi landasan moral dan spiritual yang menjiwai keempat sila di bawahnya. Keyakinan kepada Tuhan Yang Maha Esa mendorong manusia untuk memperlakukan sesama secara adil dan beradab (Sila ke-2), menjaga persatuan di tengah keberagaman (Sila ke-3), mengutamakan musyawarah mufakat dalam mengambil keputusan bersama (Sila ke-4), serta mewujudkan kesejahteraan yang merata bagi seluruh rakyat Indonesia (Sila ke-5).",
+        "teks": "Seorang warga sangat rajin beribadah sesuai agamanya, tetapi sering merendahkan tetangganya yang berbeda suku dan menolak bekerja sama menjaga kebersihan lingkungan. Berdasarkan konsep kesatuan utuh pada Teks 1, bagaimana penilaian yang paling tepat terhadap perilaku warga tersebut?",
+        "opsi": [
+          "Pengamalan Pancasilanya sudah sempurna karena kewajiban utama manusia hanyalah melaksanakan Sila pertama.",
+          "Perilakunya dapat dibenarkan selama ia tidak melanggar aturan hukum pidana yang berlaku di desa.",
+          "Pengamalan Sila pertamanya belum utuh karena nilai ketuhanan seharusnya menjiwai sikap kemanusiaan (Sila ke-2) dan persatuan (Sila ke-3).",
+          "Warga tersebut telah mengamalkan Sila keempat dan kelima secara mandiri tanpa perlu terikat pada Sila kedua."
+        ],
+        "kunci": 2,
+        "bobot": 2
+      },
+      {
+        "id": 3,
+        "tipe": "pg",
+        "stimulus": "[STIMULUS TEKS 1 & BAGAN 1 — Untuk Soal No. 1 s.d. 3]\nPerhatikan Bagan 1 di bawah ini dan bacalah teks berikut dengan cermat!\n\nSatu Kesatuan Utuh Nilai-Nilai Pancasila\nPancasila bukanlah lima sila yang berdiri sendiri-sendiri, melainkan satu kesatuan organis yang saling menjiwai dan meliputi. Sila pertama, Ketuhanan Yang Maha Esa, menjadi landasan moral dan spiritual yang menjiwai keempat sila di bawahnya. Keyakinan kepada Tuhan Yang Maha Esa mendorong manusia untuk memperlakukan sesama secara adil dan beradab (Sila ke-2), menjaga persatuan di tengah keberagaman (Sila ke-3), mengutamakan musyawarah mufakat dalam mengambil keputusan bersama (Sila ke-4), serta mewujudkan kesejahteraan yang merata bagi seluruh rakyat Indonesia (Sila ke-5).",
+        "teks": "Perhatikan kembali alur anak panah pada Bagan 1 menuju Sila kelima (Keadilan Sosial bagi Seluruh Rakyat Indonesia). Penerapan konsep tersebut dalam kehidupan bersekolah ditunjukkan oleh pernyataan ....",
+        "opsi": [
+          "Keadilan sosial dapat terwujud apabila manusia saling menghormati martabat sesama, menjaga kerukunan, dan mengambil keputusan secara musyawarah.",
+          "Keadilan sosial hanya dapat dicapai jika seluruh siswa memiliki latar belakang suku dan agama yang sama.",
+          "Pembagian fasilitas sekolah dilakukan berdasarkan keinginan ketua kelas tanpa perlu mendengarkan pendapat anggota lain.",
+          "Kesejahteraan bersama di sekolah tidak memerlukan landasan kejujuran dan tanggung jawab moral kepada Tuhan."
+        ],
+        "kunci": 0,
+        "bobot": 2
+      },
+      {
+        "id": 4,
+        "tipe": "pg",
+        "stimulus": "[STIMULUS TEKS 2 & BAGAN 2 — Untuk Soal No. 4 s.d. 6]\nAmatilah Bagan 2 dan bacalah studi kasus berikut!\n\nGotong Royong Pemulihan Pasca-Banjir di Desa Sukamaju\nBanjir bandang melanda Desa Sukamaju dan merusak puluhan rumah warga dari berbagai latar belakang suku dan agama. Keesokan harinya, kepala desa mengumpulkan seluruh perwakilan warga untuk bermusyawarah menentukan langkah penanganan darurat. Rapat diawali dengan doa bersama menurut agama dan kepercayaan masing-masing. Dalam musyawarah, warga sepakat membentuk regu kerja bakti untuk membersihkan lumpur serta mendirikan dapur umum yang menyalurkan bantuan makanan secara merata kepada seluruh korban tanpa membeda-bedakan.",
+        "teks": "Pada studi kasus Desa Sukamaju, mengapa rapat musyawarah penanganan banjir diawali dengan doa bersama menurut agama dan kepercayaan masing-masing?",
+        "opsi": [
+          "Agar rapat musyawarah berlangsung lebih singkat dan tidak memerlukan sesi tanya jawab.",
+          "Untuk menunjukkan bahwa pengambilan keputusan bersama (Sila ke-4) dilandasi tanggung jawab moral dan ketakwaan kepada Tuhan Yang Maha Esa (Sila ke-1).",
+          "Karena aturan desa melarang warga berbicara sebelum mendapatkan giliran berdoa secara bergantian.",
+          "Supaya bantuan makanan dari pemerintah segera tiba di balai desa sebelum rapat selesai."
+        ],
+        "kunci": 1,
+        "bobot": 2
+      },
+      {
+        "id": 5,
+        "tipe": "pg",
+        "stimulus": "[STIMULUS TEKS 2 & BAGAN 2 — Untuk Soal No. 4 s.d. 6]\nAmatilah Bagan 2 dan bacalah studi kasus berikut!\n\nGotong Royong Pemulihan Pasca-Banjir di Desa Sukamaju\nBanjir bandang melanda Desa Sukamaju dan merusak puluhan rumah warga dari berbagai latar belakang suku dan agama. Keesokan harinya, kepala desa mengumpulkan seluruh perwakilan warga untuk bermusyawarah menentukan langkah penanganan darurat. Rapat diawali dengan doa bersama menurut agama dan kepercayaan masing-masing. Dalam musyawarah, warga sepakat membentuk regu kerja bakti untuk membersihkan lumpur serta mendirikan dapur umum yang menyalurkan bantuan makanan secara merata kepada seluruh korban tanpa membeda-bedakan.",
+        "teks": "Perhatikan kalimat terakhir pada Teks 2: \"...warga sepakat membentuk regu kerja bakti untuk membersihkan lumpur serta mendirikan dapur umum yang menyalurkan bantuan makanan secara merata kepada seluruh korban tanpa membeda-bedakan.\" Peristiwa ini menunjukkan keterkaitan langsung antara nilai-nilai Pancasila pada ....",
+        "opsi": [
+          "Sila ke-1 dan Sila ke-4 saja, karena melibatkan doa bersama dan rapat balai desa.",
+          "Sila ke-3 (persatuan dalam kerja bakti lintas suku/agama), Sila ke-2 (kepedulian kemanusiaan), dan Sila ke-5 (penyaluran bantuan yang adil dan merata).",
+          "Sila ke-2 dan Sila ke-4 saja, tanpa ada hubungan dengan persatuan warga desa.",
+          "Sila ke-5 saja, karena pembagian makanan merupakan tugas utama pemerintah daerah."
+        ],
+        "kunci": 1,
+        "bobot": 2
+      },
+      {
+        "id": 6,
+        "tipe": "pg",
+        "stimulus": "[STIMULUS TEKS 2 & BAGAN 2 — Untuk Soal No. 4 s.d. 6]\nAmatilah Bagan 2 dan bacalah studi kasus berikut!\n\nGotong Royong Pemulihan Pasca-Banjir di Desa Sukamaju\nBanjir bandang melanda Desa Sukamaju dan merusak puluhan rumah warga dari berbagai latar belakang suku dan agama. Keesokan harinya, kepala desa mengumpulkan seluruh perwakilan warga untuk bermusyawarah menentukan langkah penanganan darurat. Rapat diawali dengan doa bersama menurut agama dan kepercayaan masing-masing. Dalam musyawarah, warga sepakat membentuk regu kerja bakti untuk membersihkan lumpur serta mendirikan dapur umum yang menyalurkan bantuan makanan secara merata kepada seluruh korban tanpa membeda-bedakan.",
+        "teks": "Andaikan petugas dapur umum di Desa Sukamaju hanya memberikan paket makanan terbaik kepada kerabat dekatnya, sementara warga pendatang diberi sisa makanan seadanya. Dampak utama tindakan tersebut terhadap keutuhan nilai Pancasila adalah ....",
+        "opsi": [
+          "Meningkatkan efisiensi pembagian logistik sehingga stok dapur umum bertahan lebih lama.",
+          "Merusak makna persatuan (Sila ke-3) karena melanggar prinsip kemanusiaan yang adil dan beradab (Sila ke-2) serta keadilan sosial (Sila ke-5).",
+          "Tetap sesuai dengan Sila keempat asalkan petugas dapur umum dipilih melalui pemungutan suara.",
+          "Memperkuat solidaritas antarwarga asli desa meskipun warga pendatang merasa dirugikan."
+        ],
+        "kunci": 1,
+        "bobot": 2
+      },
+      {
+        "id": 7,
+        "tipe": "pg",
+        "stimulus": "[STIMULUS TEKS 3 — Untuk Soal No. 7 s.d. 9]\nBacalah kasus dilema sosial berikut dengan saksama!\n\nKeputusan Sepihak Panitia Bantuan Sosial\nKarang Taruna Kelurahan Harapan menerima sumbangan 100 paket sembako untuk warga prasejahtera. Ketua panitia memutuskan sendiri jadwal pembagian sembako pada hari Minggu pukul 09.00 pagi tanpa berdiskusi dengan anggota lain. Selain itu, ia menetapkan bahwa paket sembako hanya dibagikan kepada warga yang hadir tepat waktu di balai kelurahan. Akibatnya, beberapa warga yang sedang menjalankan ibadah Minggu pagi serta warga lansia yang sakit tidak dapat mengambil bagian mereka.",
+        "teks": "Analisislah pelanggaran keterkaitan antar-sila Pancasila yang terjadi akibat keputusan sepihak ketua panitia pada Teks 3!",
+        "opsi": [
+          "Pengabaian musyawarah (Sila ke-4) menyebabkan terganggunya kesempatan warga beribadah (Sila ke-1) dan hilangnya hak warga lansia atas bantuan yang adil (Sila ke-5).",
+          "Ketua panitia telah menerapkan Sila kedua secara tepat karena mendisiplinkan warga agar datang tepat waktu.",
+          "Pelanggaran hanya terjadi pada Sila ketiga karena warga tidak melakukan kerja bakti membersihkan balai kelurahan.",
+          "Keputusan tersebut sudah mencerminkan keadilan sosial (Sila ke-5) karena seluruh paket sembako habis dibagikan."
+        ],
+        "kunci": 0,
+        "bobot": 2
+      },
+      {
+        "id": 8,
+        "tipe": "pg",
+        "stimulus": "[STIMULUS TEKS 3 — Untuk Soal No. 7 s.d. 9]\nBacalah kasus dilema sosial berikut dengan saksama!\n\nKeputusan Sepihak Panitia Bantuan Sosial\nKarang Taruna Kelurahan Harapan menerima sumbangan 100 paket sembako untuk warga prasejahtera. Ketua panitia memutuskan sendiri jadwal pembagian sembako pada hari Minggu pukul 09.00 pagi tanpa berdiskusi dengan anggota lain. Selain itu, ia menetapkan bahwa paket sembako hanya dibagikan kepada warga yang hadir tepat waktu di balai kelurahan. Akibatnya, beberapa warga yang sedang menjalankan ibadah Minggu pagi serta warga lansia yang sakit tidak dapat mengambil bagian mereka.",
+        "teks": "Setelah menerima masukan dari tokoh masyarakat, panitia Karang Taruna menggelar musyawarah ulang. Mereka sepakat memindahkan waktu pembagian ke pukul 13.00 siang serta membentuk tim pengantar sembako langsung ke rumah warga lansia yang sakit. Evaluasi yang paling tepat terhadap langkah perbaikan tersebut adalah ....",
+        "opsi": [
+          "Langkah tersebut kurang efektif karena menambah beban pekerjaan anggota panitia mengantar sembako.",
+          "Keputusan hasil musyawarah (Sila ke-4) berhasil menyelaraskan penghormatan hak beribadah (Sila ke-1), kerukunan warga (Sila ke-3), dan keadilan distribusi (Sila ke-5).",
+          "Pemindahan jadwal hanya menguntungkan sebagian kelompok warga dan mengabaikan kepentingan panitia.",
+          "Pengantaran sembako ke rumah warga lansia bertentangan dengan prinsip kesetaraan Sila kedua."
+        ],
+        "kunci": 1,
+        "bobot": 2
+      },
+      {
+        "id": 9,
+        "tipe": "pg",
+        "stimulus": "[STIMULUS TEKS 3 — Untuk Soal No. 7 s.d. 9]\nBacalah kasus dilema sosial berikut dengan saksama!\n\nKeputusan Sepihak Panitia Bantuan Sosial\nKarang Taruna Kelurahan Harapan menerima sumbangan 100 paket sembako untuk warga prasejahtera. Ketua panitia memutuskan sendiri jadwal pembagian sembako pada hari Minggu pukul 09.00 pagi tanpa berdiskusi dengan anggota lain. Selain itu, ia menetapkan bahwa paket sembako hanya dibagikan kepada warga yang hadir tepat waktu di balai kelurahan. Akibatnya, beberapa warga yang sedang menjalankan ibadah Minggu pagi serta warga lansia yang sakit tidak dapat mengambil bagian mereka.",
+        "teks": "Jika kamu menjadi salah satu anggota panitia Karang Taruna pada awal kejadian (Teks 3), usulan solusi yang paling mencerminkan pengamalan Pancasila secara utuh adalah ....",
+        "opsi": [
+          "Membiarkan keputusan ketua panitia berjalan agar tidak terjadi perbedaan pendapat di dalam organisasi.",
+          "Mengajak ketua dan anggota panitia bermusyawarah untuk mengatur jadwal yang menghormati waktu ibadah serta mendata warga sakit agar tetap menerima haknya.",
+          "Membatalkan pembagian sembako seluruhnya dan mengembalikan bantuan kepada donatur.",
+          "Membagikan sembako secara diam-diam kepada tetangga terdekat sebelum acara resmi dimulai."
+        ],
+        "kunci": 1,
+        "bobot": 2
+      },
+      {
+        "id": 10,
+        "tipe": "pg",
+        "stimulus": "[STIMULUS TEKS 4 & BAGAN 3 — Untuk Soal No. 10 s.d. 12]\nPerhatikan Bagan 3 dan bacalah cerita pengalaman belajar berikut!\n\nKesepakatan Piket dan Dana Sosial Kelas VI\nSetiap pagi sebelum pelajaran dimulai, siswa kelas VI berdoa bersama dipimpin oleh ketua kelas secara bergiliran. Pada hari Senin, wali kelas memfasilitasi diskusi kelas untuk menyusun jadwal piket kebersihan dan pengelolaan uang kas sosial. Dalam diskusi, siswa sepakat bahwa tugas membersihkan area yang tinggi dilakukan oleh siswa yang bertubuh lebih tinggi, sedangkan siswa lain menyapu dan merapikan meja. Selain itu, sebagian uang kas disepakati untuk menjenguk teman sekelas yang sedang dirawat di rumah sakit.",
+        "teks": "Berdasarkan Teks 4 dan Bagan 3, pembagian tugas piket yang menyesuaikan kondisi fisik setiap siswa (area tinggi oleh siswa yang lebih tinggi, sementara yang lain menyapu) mencerminkan keterkaitan antara ....",
+        "opsi": [
+          "Sila ke-2 (menghormati kondisi dan martabat sesama manusia) dengan Sila ke-5 (keadilan proporsional dalam pembagian tugas bersama).",
+          "Sila ke-1 (kebebasan beragama) dengan Sila ke-3 (persatuan wilayah Nusantara).",
+          "Sila ke-4 (pemilihan umum) dengan Sila ke-1 (kewajiban menjalankan ibadah).",
+          "Sila ke-3 (cinta produk dalam negeri) dengan Sila ke-2 (persamaan derajat hukum)."
+        ],
+        "kunci": 0,
+        "bobot": 2
+      },
+      {
+        "id": 11,
+        "tipe": "pg",
+        "stimulus": "[STIMULUS TEKS 4 & BAGAN 3 — Untuk Soal No. 10 s.d. 12]\nPerhatikan Bagan 3 dan bacalah cerita pengalaman belajar berikut!\n\nKesepakatan Piket dan Dana Sosial Kelas VI\nSetiap pagi sebelum pelajaran dimulai, siswa kelas VI berdoa bersama dipimpin oleh ketua kelas secara bergiliran. Pada hari Senin, wali kelas memfasilitasi diskusi kelas untuk menyusun jadwal piket kebersihan dan pengelolaan uang kas sosial. Dalam diskusi, siswa sepakat bahwa tugas membersihkan area yang tinggi dilakukan oleh siswa yang bertubuh lebih tinggi, sedangkan siswa lain menyapu dan merapikan meja. Selain itu, sebagian uang kas disepakati untuk menjenguk teman sekelas yang sedang dirawat di rumah sakit.",
+        "teks": "Penggunaan uang kas sosial kelas untuk menjenguk teman yang sakit setelah disepakati bersama dalam diskusi kelas merupakan contoh penerapan Pancasila sebagai satu kesatuan karena ....",
+        "opsi": [
+          "Keputusan diambil melalui musyawarah (Sila ke-4) yang didorong oleh rasa empati kemanusiaan (Sila ke-2) dan mempererat kekeluargaan kelas (Sila ke-3).",
+          "Penggunaan uang kas hanya bertujuan menghabiskan anggaran kelas sebelum semester berakhir.",
+          "Kegiatan menjenguk teman sakit merupakan kewajiban yang hanya berlaku bagi pengurus inti kelas.",
+          "Diskusi kelas dilakukan untuk menghindari tanggung jawab individu terhadap kebersihan ruang belajar."
+        ],
+        "kunci": 0,
+        "bobot": 2
+      },
+      {
+        "id": 12,
+        "tipe": "pg",
+        "stimulus": "[STIMULUS TEKS 4 & BAGAN 3 — Untuk Soal No. 10 s.d. 12]\nPerhatikan Bagan 3 dan bacalah cerita pengalaman belajar berikut!\n\nKesepakatan Piket dan Dana Sosial Kelas VI\nSetiap pagi sebelum pelajaran dimulai, siswa kelas VI berdoa bersama dipimpin oleh ketua kelas secara bergiliran. Pada hari Senin, wali kelas memfasilitasi diskusi kelas untuk menyusun jadwal piket kebersihan dan pengelolaan uang kas sosial. Dalam diskusi, siswa sepakat bahwa tugas membersihkan area yang tinggi dilakukan oleh siswa yang bertubuh lebih tinggi, sedangkan siswa lain menyapu dan merapikan meja. Selain itu, sebagian uang kas disepakati untuk menjenguk teman sekelas yang sedang dirawat di rumah sakit.",
+        "teks": "Manakah urutan pengamalan sila-sila Pancasila yang tampak secara berkesinambungan dari awal hingga akhir cerita pada Teks 4?",
+        "opsi": [
+          "Sila ke-5 -> Sila ke-3 -> Sila ke-1 -> Sila ke-4",
+          "Sila ke-1 (berdoa bersama) -> Sila ke-4 (diskusi kelas) -> Sila ke-2 & Sila ke-5 (pembagian piket proporsional) -> Sila ke-3 & Sila ke-2 (solidaritas menjenguk teman).",
+          "Sila ke-3 -> Sila ke-5 -> Sila ke-2 -> Sila ke-1",
+          "Sila ke-4 -> Sila ke-1 -> Sila ke-5 -> Sila ke-3"
+        ],
+        "kunci": 1,
+        "bobot": 2
+      },
+      {
+        "id": 13,
+        "tipe": "pg",
+        "stimulus": "[STIMULUS TEKS 5 — Untuk Soal No. 13 s.d. 15]\nBacalah wacana permasalahan lingkungan dan sosial berikut!\n\nKonflik Pengelolaan Mata Air Desa\nSebuah perusahaan air minum berencana mengambil air dari sumber mata air utama di kaki bukit tanpa terlebih dahulu bermusyawarah dengan warga desa setempat. Padahal, mata air tersebut merupakan sumber air bersih bagi pertanian warga sekaligus tempat yang dijaga kelestariannya sebagai bentuk rasa syukur kepada Tuhan Yang Maha Esa. Warga khawatir debit air sawah mereka akan menyusut drastis jika pengambilan air dilakukan secara berlebihan.",
+        "teks": "Berdasarkan Teks 5, mengapa rencana pengambilan air oleh perusahaan tanpa melibatkan warga desa bertentangan dengan kesatuan nilai Pancasila?",
+        "opsi": [
+          "Karena mengabaikan musyawarah mufakat (Sila ke-4), merusak amanah menjaga alam ciptaan Tuhan (Sila ke-1), serta mengancam keadilan hak penghidupan warga (Sila ke-5).",
+          "Karena perusahaan swasta dilarang keras beroperasi di wilayah pedesaan menurut aturan adat.",
+          "Karena warga desa tidak berhak menggunakan sumber daya alam yang berada di kaki bukit.",
+          "Karena kegiatan pertanian warga tidak memiliki hubungan dengan kesejahteraan sosial masyarakat."
+        ],
+        "kunci": 0,
+        "bobot": 2
+      },
+      {
+        "id": 14,
+        "tipe": "pg",
+        "stimulus": "[STIMULUS TEKS 5 — Untuk Soal No. 13 s.d. 15]\nBacalah wacana permasalahan lingkungan dan sosial berikut!\n\nKonflik Pengelolaan Mata Air Desa\nSebuah perusahaan air minum berencana mengambil air dari sumber mata air utama di kaki bukit tanpa terlebih dahulu bermusyawarah dengan warga desa setempat. Padahal, mata air tersebut merupakan sumber air bersih bagi pertanian warga sekaligus tempat yang dijaga kelestariannya sebagai bentuk rasa syukur kepada Tuhan Yang Maha Esa. Warga khawatir debit air sawah mereka akan menyusut drastis jika pengambilan air dilakukan secara berlebihan.",
+        "teks": "Untuk menyelesaikan persoalan pada Teks 5 secara adil dan bermartabat, pemerintah desa memfasilitasi forum dialog antara perwakilan warga, pihak perusahaan, dan tokoh lingkungan. Bagaimana forum dialog tersebut mengamalkan nilai-nilai Pancasila secara terpadu?",
+        "opsi": [
+          "Forum dialog digunakan untuk memaksa warga menyetujui seluruh tuntutan perusahaan demi investasi.",
+          "Melalui musyawarah (Sila ke-4), semua pihak mencari kesepakatan yang menjaga kelestarian alam (Sila ke-1), kerukunan sosial (Sila ke-3), dan hak air bagi warga (Sila ke-2 & ke-5).",
+          "Dialog dilakukan secara tertutup tanpa melibatkan tokoh masyarakat agar keputusan cepat disahkan.",
+          "Warga diminta menyerahkan seluruh pengelolaan mata air kepada perusahaan dengan imbalan uang tunai."
+        ],
+        "kunci": 1,
+        "bobot": 2
+      },
+      {
+        "id": 15,
+        "tipe": "pg",
+        "stimulus": "[STIMULUS TEKS 5 — Untuk Soal No. 13 s.d. 15]\nBacalah wacana permasalahan lingkungan dan sosial berikut!\n\nKonflik Pengelolaan Mata Air Desa\nSebuah perusahaan air minum berencana mengambil air dari sumber mata air utama di kaki bukit tanpa terlebih dahulu bermusyawarah dengan warga desa setempat. Padahal, mata air tersebut merupakan sumber air bersih bagi pertanian warga sekaligus tempat yang dijaga kelestariannya sebagai bentuk rasa syukur kepada Tuhan Yang Maha Esa. Warga khawatir debit air sawah mereka akan menyusut drastis jika pengambilan air dilakukan secara berlebihan.",
+        "teks": "Dalam forum musyawarah tersebut, disepakati pembatasan kuota pengambilan air serta program penanaman kembali pohon di sekitar mata air agar pasokan air pertanian warga tetap terjamin. Kesepakatan ini terutama mewujudkan tujuan akhir dari rangkaian sila Pancasila, yaitu ....",
+        "opsi": [
+          "Kebebasan mutlak bagi pelaku usaha untuk memanfaatkan seluruh kekayaan alam.",
+          "Keadilan sosial bagi seluruh rakyat Indonesia melalui pengelolaan sumber daya yang adil dan berkelanjutan (Sila ke-5).",
+          "Penyeragaman mata pencaharian seluruh warga desa menjadi pekerja pabrik air minum.",
+          "Pemisahan antara kepentingan pelestarian lingkungan dengan kesejahteraan ekonomi warga."
+        ],
+        "kunci": 1,
+        "bobot": 2
+      },
+      {
+        "id": 16,
+        "tipe": "pgk",
+        "stimulus": "[STIMULUS TEKS 6 & BAGAN 1 — Untuk Soal No. 16 s.d. 18]\nTinjau kembali Bagan 1 (Hubungan Hierarkis & Utuh Pancasila) dan bacalah uraian berikut!\n\nMengapa Sila-Sila Pancasila Tidak Dapat Dipisahkan?\nDalam kehidupan berbangsa, mengamalkan satu sila secara terpisah dari sila lainnya dapat menimbulkan ketimpangan. Sebagai contoh, kegiatan gotong royong membangun fasilitas umum (Sila ke-3) yang dilakukan dengan mengabaikan waktu ibadah warga (Sila ke-1) atau merampas hak tanah warga kecil tanpa ganti rugi yang layak (Sila ke-2 dan Sila ke-5) bukanlah pengamalan Pancasila yang utuh. Setiap sila saling mengunci, melengkapi, dan memberi arah moral bagi sila lainnya.",
+        "teks": "Berdasarkan Teks 6 dan Bagan 1, pilihlah DUA (2) pernyataan yang menunjukkan analisis paling tepat mengenai sifat organis (kesatuan utuh) sila-sila Pancasila!",
+        "opsi": [
+          "Setiap sila dalam Pancasila memiliki kedudukan yang saling menjiwai dan meliputi sehingga tidak dapat diamalkan secara terpisah.",
+          "Sila ketiga (Persatuan Indonesia) tetap bernilai Pancasila meskipun dicapai dengan merampas hak warga kecil.",
+          "Pengamalan Sila pertama harus tercermin dalam perilaku adil, beradab, dan menghargai sesama dalam kehidupan sosial.",
+          "Sila kelima merupakan satu-satunya sila yang penting, sedangkan sila pertama hingga keempat hanya pelengkap."
+        ],
+        "kunci": [0, 2],
+        "bobot": 4
+      },
+      {
+        "id": 17,
+        "tipe": "pgk",
+        "stimulus": "[STIMULUS TEKS 6 & BAGAN 1 — Untuk Soal No. 16 s.d. 18]\nTinjau kembali Bagan 1 (Hubungan Hierarkis & Utuh Pancasila) dan bacalah uraian berikut!\n\nMengapa Sila-Sila Pancasila Tidak Dapat Dipisahkan?\nDalam kehidupan berbangsa, mengamalkan satu sila secara terpisah dari sila lainnya dapat menimbulkan ketimpangan. Sebagai contoh, kegiatan gotong royong membangun fasilitas umum (Sila ke-3) yang dilakukan dengan mengabaikan waktu ibadah warga (Sila ke-1) atau merampas hak tanah warga kecil tanpa ganti rugi yang layak (Sila ke-2 dan Sila ke-5) bukanlah pengamalan Pancasila yang utuh. Setiap sila saling mengunci, melengkapi, dan memberi arah moral bagi sila lainnya.",
+        "teks": "Perhatikan contoh kasus pembangunan fasilitas umum pada Teks 6! Pilihlah DUA (2) bentuk pelanggaran nilai Pancasila yang terjadi apabila pembangunan tersebut dilakukan tanpa musyawarah dan merugikan warga kecil!",
+        "opsi": [
+          "Mengabaikan waktu ibadah warga berarti menghilangkan landasan spiritual Sila pertama dalam kegiatan sosial.",
+          "Pembangunan fasilitas umum otomatis memenuhi Sila kelima meskipun mengorbankan hak hidup warga setempat.",
+          "Merampas tanah warga tanpa ganti rugi yang adil melanggar penghormatan martabat manusia (Sila ke-2) dan keadilan sosial (Sila ke-5).",
+          "Keputusan pembangunan tanpa musyawarah merupakan wujud efisiensi yang dibenarkan oleh Sila keempat."
+        ],
+        "kunci": [0, 2],
+        "bobot": 4
+      },
+      {
+        "id": 18,
+        "tipe": "pgk",
+        "stimulus": "[STIMULUS TEKS 6 & BAGAN 1 — Untuk Soal No. 16 s.d. 18]\nTinjau kembali Bagan 1 (Hubungan Hierarkis & Utuh Pancasila) dan bacalah uraian berikut!\n\nMengapa Sila-Sila Pancasila Tidak Dapat Dipisahkan?\nDalam kehidupan berbangsa, mengamalkan satu sila secara terpisah dari sila lainnya dapat menimbulkan ketimpangan. Sebagai contoh, kegiatan gotong royong membangun fasilitas umum (Sila ke-3) yang dilakukan dengan mengabaikan waktu ibadah warga (Sila ke-1) atau merampas hak tanah warga kecil tanpa ganti rugi yang layak (Sila ke-2 dan Sila ke-5) bukanlah pengamalan Pancasila yang utuh. Setiap sila saling mengunci, melengkapi, dan memberi arah moral bagi sila lainnya.",
+        "teks": "Sebagai pelajar kelas VI, tindakan nyata apa saja yang mencerminkan pengamalan Sila pertama, kedua, dan ketiga secara serentak di lingkungan sekolah? Pilihlah DUA (2) jawaban yang paling tepat!",
+        "opsi": [
+          "Menjaga ketenangan saat teman yang berbeda agama sedang berdoa sebelum pelajaran dimulai.",
+          "Hanya mau berteman dan belajar kelompok dengan siswa yang berasal dari daerah yang sama.",
+          "Menghargai pendapat teman dari berbagai suku saat bekerja sama menyelesaikan tugas kelompok.",
+          "Mengerjakan tugas kelompok sendirian agar mendapatkan nilai tertinggi tanpa bantuan teman."
+        ],
+        "kunci": [0, 2],
+        "bobot": 4
+      },
+      {
+        "id": 19,
+        "tipe": "pgk",
+        "stimulus": "[STIMULUS TEKS 7 & BAGAN 2 — Untuk Soal No. 19 s.d. 21]\nAmatilah kembali Bagan 2 dan bacalah laporan pengamatan berikut!\n\nDinamika Kehidupan Masyarakat di Kampung Harmoni\nKampung Harmoni dihuni oleh warga dengan beragam latar belakang profesi, suku, dan agama. Akhir-akhir ini, muncul dua persoalan: pertama, beberapa pemuda sering memutar musik dengan volume sangat keras hingga larut malam sehingga mengganggu warga yang beristirahat dan beribadah malam; kedua, rapat RT jarang dihadiri warga sehingga keputusan penggunaan dana kas RT sering menimbulkan kesalahpahaman dan rasa ketidakadilan.",
+        "teks": "Analisislah akar permasalahan di Kampung Harmoni (Teks 7) berdasarkan keterkaitan antar-sila Pancasila! Pilihlah DUA (2) hasil analisis yang paling tepat!",
+        "opsi": [
+          "Ketidakadilan dalam pengelolaan dana kas RT (Sila ke-5) berakar dari lemahnya budaya musyawarah mufakat (Sila ke-4).",
+          "Memutar musik keras hingga larut malam merupakan bentuk kebebasan berekspresi yang sesuai dengan Sila kedua.",
+          "Tindakan mengganggu ketenangan ibadah dan istirahat tetangga menunjukkan kurangnya kesadaran ketuhanan (Sila ke-1) dan tenggang rasa kemanusiaan (Sila ke-2).",
+          "Persoalan di Kampung Harmoni hanya berkaitan dengan Sila ketiga dan tidak berhubungan dengan sila lainnya."
+        ],
+        "kunci": [0, 2],
+        "bobot": 4
+      },
+      {
+        "id": 20,
+        "tipe": "pgk",
+        "stimulus": "[STIMULUS TEKS 7 & BAGAN 2 — Untuk Soal No. 19 s.d. 21]\nAmatilah kembali Bagan 2 dan bacalah laporan pengamatan berikut!\n\nDinamika Kehidupan Masyarakat di Kampung Harmoni\nKampung Harmoni dihuni oleh warga dengan beragam latar belakang profesi, suku, dan agama. Akhir-akhir ini, muncul dua persoalan: pertama, beberapa pemuda sering memutar musik dengan volume sangat keras hingga larut malam sehingga mengganggu warga yang beristirahat dan beribadah malam; kedua, rapat RT jarang dihadiri warga sehingga keputusan penggunaan dana kas RT sering menimbulkan kesalahpahaman dan rasa ketidakadilan.",
+        "teks": "Jika kamu diminta merancang program perbaikan di Kampung Harmoni yang memadukan Sila ke-1, Sila ke-3, Sila ke-4, dan Sila ke-5 sekaligus, pilihlah DUA (2) rancangan solusi yang paling efektif!",
+        "opsi": [
+          "Mengadakan musyawarah warga lintas generasi untuk menyepakati aturan jam tenang malam demi menghormati waktu istirahat dan ibadah.",
+          "Membentuk papan informasi transparansi keuangan kas RT yang disepakati bersama dalam rapat warga sehingga tercipta keadilan dan saling percaya.",
+          "Melarang seluruh pemuda mengadakan kegiatan seni di lingkungan kampung agar tidak menimbulkan kebisingan.",
+          "Membubarkan kepengurusan RT dan menyerahkan seluruh urusan kampung kepada masing-masing keluarga."
+        ],
+        "kunci": [0, 1],
+        "bobot": 4
+      },
+      {
+        "id": 21,
+        "tipe": "pgk",
+        "stimulus": "[STIMULUS TEKS 7 & BAGAN 2 — Untuk Soal No. 19 s.d. 21]\nAmatilah kembali Bagan 2 dan bacalah laporan pengamatan berikut!\n\nDinamika Kehidupan Masyarakat di Kampung Harmoni\nKampung Harmoni dihuni oleh warga dengan beragam latar belakang profesi, suku, dan agama. Akhir-akhir ini, muncul dua persoalan: pertama, beberapa pemuda sering memutar musik dengan volume sangat keras hingga larut malam sehingga mengganggu warga yang beristirahat dan beribadah malam; kedua, rapat RT jarang dihadiri warga sehingga keputusan penggunaan dana kas RT sering menimbulkan kesalahpahaman dan rasa ketidakadilan.",
+        "teks": "Perhatikan kembali keterkaitan antara Sila ke-4 dan Sila ke-2 pada Bagan 2! Mengapa musyawarah mufakat harus dilandasi oleh nilai kemanusiaan yang adil dan beradab? Pilihlah DUA (2) alasan yang paling tepat!",
+        "opsi": [
+          "Agar setiap peserta musyawarah dihargai hak dan martabatnya untuk menyampaikan pendapat tanpa mendapat ejekan atau tekanan.",
+          "Supaya keputusan yang dihasilkan tidak merugikan kelompok minoritas maupun warga yang berada dalam kondisi rentan.",
+          "Karena musyawarah hanya boleh diikuti oleh warga yang memiliki kedudukan sosial tinggi di masyarakat.",
+          "Agar ketua rapat dapat segera menutup pertemuan tanpa perlu mendengarkan usulan anggota."
+        ],
+        "kunci": [0, 1],
+        "bobot": 4
+      },
+      {
+        "id": 22,
+        "tipe": "pgk",
+        "stimulus": "[STIMULUS TEKS 8 & BAGAN 3 — Untuk Soal No. 22 s.d. 25]\nPerhatikan Bagan 3 dan bacalah narasi proyek kelas berikut!\n\nProyek 'Pasar Amal Berbagi' Kelas VI\nSiswa kelas VI mengadakan kegiatan 'Pasar Amal Berbagi' untuk membantu korban bencana alam di kabupaten tetangga. Sebelum acara, seluruh siswa bermusyawarah menentukan jenis barang yang dijual dan harga yang terjangkau bagi warga sekolah. Saat pelaksanaan, siswa dari berbagai suku dan agama bekerja sama menjaga stan dengan jujur dan ramah. Setelah acara selesai, panitia kelas menghitung hasil penjualan secara terbuka di depan seluruh siswa dan wali kelas, lalu menyalurkan 100% keuntungan melalui lembaga sosial tepercaya.",
+        "teks": "Telaahlah kegiatan 'Pasar Amal Berbagi' pada Teks 8! Pilihlah DUA (2) pernyataan yang menunjukkan analisis hubungan antar-sila Pancasila dengan tepat!",
+        "opsi": [
+          "Penghitungan hasil penjualan secara terbuka di depan kelas mencerminkan keterbukaan musyawarah (Sila ke-4) yang menjamin keadilan dan amanah (Sila ke-5 & Sila ke-1).",
+          "Penyaluran seluruh keuntungan untuk membantu korban bencana alam mewujudkan nilai kemanusiaan (Sila ke-2) dan keadilan sosial (Sila ke-5).",
+          "Penetapan harga barang yang terjangkau bertujuan agar siswa mendapatkan keuntungan pribadi sebanyak-banyaknya.",
+          "Kerja sama siswa lintas suku dan agama saat menjaga stan hanya berkaitan dengan Sila keempat tanpa melibatkan Sila ketiga."
+        ],
+        "kunci": [0, 1],
+        "bobot": 4
+      },
+      {
+        "id": 23,
+        "tipe": "pgk",
+        "stimulus": "[STIMULUS TEKS 8 & BAGAN 3 — Untuk Soal No. 22 s.d. 25]\nPerhatikan Bagan 3 dan bacalah narasi proyek kelas berikut!\n\nProyek 'Pasar Amal Berbagi' Kelas VI\nSiswa kelas VI mengadakan kegiatan 'Pasar Amal Berbagi' untuk membantu korban bencana alam di kabupaten tetangga. Sebelum acara, seluruh siswa bermusyawarah menentukan jenis barang yang dijual dan harga yang terjangkau bagi warga sekolah. Saat pelaksanaan, siswa dari berbagai suku dan agama bekerja sama menjaga stan dengan jujur dan ramah. Setelah acara selesai, panitia kelas menghitung hasil penjualan secara terbuka di depan seluruh siswa dan wali kelas, lalu menyalurkan 100% keuntungan melalui lembaga sosial tepercaya.",
+        "teks": "Seorang pengamat menyatakan bahwa keberhasilan proyek 'Pasar Amal Berbagi' membuktikan bahwa Pancasila merupakan satu kesatuan organis. Pilihlah DUA (2) argumen pendukung yang paling kuat untuk membenarkan pernyataan pengamat tersebut!",
+        "opsi": [
+          "Seluruh tahapan kegiatan—mulai dari kejujuran (Sila ke-1), empati korban bencana (Sila ke-2), kerja sama kelas (Sila ke-3), musyawarah harga (Sila ke-4), hingga penyaluran adil (Sila ke-5)—berjalan saling menopang.",
+          "Kegiatan tersebut berhasil karena siswa hanya berfokus pada pengumpulan dana tanpa memedulikan proses musyawarah.",
+          "Jika salah satu nilai dihilangkan—misalnya kejujuran atau keterbukaan—maka kepercayaan dan tujuan keadilan sosial tidak akan tercapai.",
+          "Proyek pasar amal membuktikan bahwa setiap sila dapat dipraktikkan secara terpisah sesuai selera masing-masing siswa."
+        ],
+        "kunci": [0, 2],
+        "bobot": 4
+      },
+      {
+        "id": 24,
+        "tipe": "pgk",
+        "stimulus": "[STIMULUS TEKS 8 & BAGAN 3 — Untuk Soal No. 22 s.d. 25]\nPerhatikan Bagan 3 dan bacalah narasi proyek kelas berikut!\n\nProyek 'Pasar Amal Berbagi' Kelas VI\nSiswa kelas VI mengadakan kegiatan 'Pasar Amal Berbagi' untuk membantu korban bencana alam di kabupaten tetangga. Sebelum acara, seluruh siswa bermusyawarah menentukan jenis barang yang dijual dan harga yang terjangkau bagi warga sekolah. Saat pelaksanaan, siswa dari berbagai suku dan agama bekerja sama menjaga stan dengan jujur dan ramah. Setelah acara selesai, panitia kelas menghitung hasil penjualan secara terbuka di depan seluruh siswa dan wali kelas, lalu menyalurkan 100% keuntungan melalui lembaga sosial tepercaya.",
+        "teks": "Andaikan dalam musyawarah evaluasi proyek (Teks 8), ada dua siswa yang mengusulkan agar separuh uang amal dipakai untuk acara makan-makan panitia kelas meskipun korban bencana masih sangat membutuhkan bantuan. Pilihlah DUA (2) evaluasi kritis terhadap usulan tersebut!",
+        "opsi": [
+          "Usulan tersebut menyimpang dari hikmat kebijaksanaan musyawarah (Sila ke-4) karena lebih mengutamakan kepentingan pribadi dibanding tanggung jawab amanah.",
+          "Usulan tersebut layak disetujui asalkan diputuskan melalui pemungutan suara terbanyak di dalam kelas.",
+          "Mengurangi hak bantuan korban bencana demi kesenangan panitia bertentangan dengan nilai kemanusiaan (Sila ke-2) dan keadilan sosial (Sila ke-5).",
+          "Penggunaan separuh dana untuk panitia justru memperkuat persatuan antaranggota panitia sesuai Sila ketiga."
+        ],
+        "kunci": [0, 2],
+        "bobot": 4
+      },
+      {
+        "id": 25,
+        "tipe": "pgk",
+        "stimulus": "[STIMULUS TEKS 8 & BAGAN 3 — Untuk Soal No. 22 s.d. 25]\nPerhatikan Bagan 3 dan bacalah narasi proyek kelas berikut!\n\nProyek 'Pasar Amal Berbagi' Kelas VI\nSiswa kelas VI mengadakan kegiatan 'Pasar Amal Berbagi' untuk membantu korban bencana alam di kabupaten tetangga. Sebelum acara, seluruh siswa bermusyawarah menentukan jenis barang yang dijual dan harga yang terjangkau bagi warga sekolah. Saat pelaksanaan, siswa dari berbagai suku dan agama bekerja sama menjaga stan dengan jujur dan ramah. Setelah acara selesai, panitia kelas menghitung hasil penjualan secara terbuka di depan seluruh siswa dan wali kelas, lalu menyalurkan 100% keuntungan melalui lembaga sosial tepercaya.",
+        "teks": "Berdasarkan keseluruhan pembelajaran pada Bab 1 (Teks 1 s.d. Teks 8), pilihlah DUA (2) simpulan evaluatif yang paling tepat mengenai kedudukan sila-sila Pancasila dalam kehidupan bermasyarakat!",
+        "opsi": [
+          "Pengamalan Pancasila secara sepotong-sepotong berpotensi menimbulkan ketimpangan sosial, intoleransi, dan ketidakadilan.",
+          "Ketuhanan Yang Maha Esa berperan sebagai kompas moral yang menjaga agar kemanusiaan, persatuan, demokrasi, dan keadilan tetap berada pada jalur yang bermartabat.",
+          "Sila keempat dapat dijalankan tanpa memperhatikan nilai kemanusiaan asalkan keputusan diambil oleh suara terbanyak.",
+          "Keadilan sosial pada Sila kelima akan terwujud secara otomatis meskipun masyarakat enggan bergotong royong dan bermusyawarah."
+        ],
+        "kunci": [0, 1],
+        "bobot": 4
+      },
+      {
+        "id": 26,
+        "tipe": "bs",
+        "konteks": "[STIMULUS TEKS 9 — Untuk Soal No. 26 (Paket Benar/Salah)]\nBacalah teks berikut dengan cermat!\n\nKerja Bakti Lintas Iman di Kampung Pelangi\nWarga Kampung Pelangi yang terdiri atas pemeluk agama Islam, Kristen, Hindu, dan Buddha rutin mengadakan kerja bakti membersihkan saluran air setiap bulan. Kegiatan selalu dimulai pukul 08.00 pagi setelah warga yang beribadah subuh dan pagi selesai menjalankan kewajiban agamanya. Pembagian area pembersihan ditentukan melalui musyawarah RT dengan mempertimbangkan kondisi fisik warga lansia agar tidak terbebani tugas berat. Hasilnya, lingkungan kampung terbebas dari banjir dan seluruh warga merasakan kenyamanan yang sama.",
+        "teks": "Berdasarkan Teks 9 ('Kerja Bakti Lintas Iman di Kampung Pelangi'), tentukan apakah setiap pernyataan berikut BENAR atau SALAH!",
+        "pernyataan": [
+          "Pengaturan waktu kerja bakti pukul 08.00 pagi setelah ibadah selesai menunjukkan bahwa pelaksanaan Sila ke-3 (gotong royong) menghormati dan dilandasi oleh Sila ke-1 (ketuhanan).",
+          "Pembagian tugas yang meringankan warga lansia merupakan bentuk ketidakadilan karena melanggar prinsip kesamaan beban pada Sila ke-5.",
+          "Kegiatan kerja bakti di Kampung Pelangi mencerminkan kesatuan utuh Pancasila karena menggabungkan toleransi beragama, musyawarah, gotong royong, dan keadilan sosial."
+        ],
+        "kunci": ["B", "S", "B"],
+        "bobot": 6
+      },
+      {
+        "id": 27,
+        "tipe": "bs",
+        "konteks": "[STIMULUS TEKS 10 — Untuk Soal No. 27 (Paket Benar/Salah)]\nBacalah studi kasus berikut dengan saksama!\n\nDilema Kejujuran dalam Lomba Kebersihan Kelas\nMenjelang penilaian lomba kebersihan antarkelas, beberapa siswa kelas VI-B sepakat menyembunyikan sampah plastik kelas mereka ke dalam tong sampah kelas VI-A agar ruang kelas mereka terlihat paling bersih. Ketua kelas VI-B sebenarnya mengetahui perbuatan tersebut, tetapi memilih diam demi menjaga kekompakan teman-temannya dan memenangkan piala lomba.",
+        "teks": "Analisislah studi kasus pada Teks 10 berdasarkan hubungan antar-sila Pancasila! Tentukan BENAR atau SALAH untuk setiap pernyataan berikut!",
+        "pernyataan": [
+          "Sikap ketua kelas yang memilih diam demi menjaga kekompakan teman-temannya merupakan pengamalan Sila ketiga (Persatuan Indonesia) yang tepat.",
+          "Tindakan memindahkan sampah ke kelas lain melanggar nilai kejujuran kepada Tuhan (Sila ke-1), merugikan hak kelas lain (Sila ke-2), dan menciptakan persaingan yang tidak adil (Sila ke-5).",
+          "Untuk memperbaiki keadaan sesuai nilai Pancasila, ketua kelas seharusnya mengajak teman-temannya berdialog secara jujur (Sila ke-4) dan membersihkan sampah bersama-sama (Sila ke-3)."
+        ],
+        "kunci": ["S", "B", "B"],
+        "bobot": 6
+      },
+      {
+        "id": 28,
+        "tipe": "bs",
+        "konteks": "[STIMULUS TEKS 11 — Untuk Soal No. 28 (Paket Benar/Salah)]\nBacalah teks berikut dengan cermat!\n\nKoperasi Kejujuran Siswa di SD Nusantara\nSD Nusantara mendirikan 'Koperasi Kejujuran' yang menyediakan alat tulis tanpa penjaga kasir. Setiap siswa yang mengambil barang memasukkan uang pembayaran ke dalam kotak terkunci dan mengambil uang kembalian sendiri sesuai harga yang tertera. Setiap akhir pekan, pengurus koperasi bersama perwakilan kelas menghitung uang dan stok barang secara terbuka. Keuntungan koperasi digunakan untuk menyediakan alat tulis gratis bagi siswa yang membutuhkan.",
+        "teks": "Evaluasilah keterkaitan nilai-nilai Pancasila dalam praktik 'Koperasi Kejujuran' pada Teks 11! Tentukan BENAR atau SALAH!",
+        "pernyataan": [
+          "Keberhasilan siswa membayar sesuai harga tanpa diawasi petugas membuktikan bahwa kesadaran diawasi Tuhan (Sila ke-1) melandasi sikap jujur menghargai hak orang lain (Sila ke-2).",
+          "Penghitungan keuangan koperasi secara terbuka setiap akhir pekan tidak memiliki hubungan dengan Sila keempat dan Sila kelima.",
+          "Jika beberapa siswa mengambil barang tanpa membayar, tindakan tersebut bukan hanya pelanggaran moral pribadi, melainkan juga merusak keadilan sosial bagi siswa lain yang membutuhkan bantuan alat tulis."
+        ],
+        "kunci": ["B", "S", "B"],
+        "bobot": 6
+      },
+      {
+        "id": 29,
+        "tipe": "bs",
+        "konteks": "[STIMULUS TEKS 12 — Untuk Soal No. 29 (Paket Benar/Salah)]\nBacalah kisah proyek kelompok berikut!\n\nTaman Obat Keluarga (TOGA) Kelompok Melati\nKelompok Melati yang beranggotakan siswa dari suku Jawa, Bugis, Sunda, dan Batak mendapat tugas membuat kebun Taman Obat Keluarga di halaman sekolah. Mereka bermusyawarah membagi tugas membawa bibit tanaman, menyiram, dan mencatat manfaat tanaman. Ketika tanaman jahe dan kunyit panen, mereka sepakat menyerahkan sebagian hasil panen ke Unit Kesehatan Sekolah (UKS) agar dapat dimanfaatkan oleh seluruh warga sekolah yang membutuhkan.",
+        "teks": "Nilailah wujud kesatuan utuh nilai Pancasila pada Teks 12 ('Taman Obat Keluarga Kelompok Melati')! Tentukan BENAR atau SALAH!",
+        "pernyataan": [
+          "Kerja sama anggota kelompok yang berasal dari berbagai suku menunjukkan pengamalan Sila ke-3 yang dipadukan dengan musyawarah pembagian tugas pada Sila ke-4.",
+          "Keputusan menyerahkan hasil panen ke UKS untuk seluruh warga sekolah merupakan perwujudan nilai kemanusiaan (Sila ke-2) dan keadilan sosial (Sila ke-5).",
+          "Keberhasilan proyek Kelompok Melati hanya ditopang oleh Sila kelima tanpa keterlibatan nilai persatuan dan musyawarah."
+        ],
+        "kunci": ["B", "B", "S"],
+        "bobot": 6
+      },
+      {
+        "id": 30,
+        "tipe": "bs",
+        "konteks": "[STIMULUS TEKS 13 — Untuk Soal No. 30 (Paket Benar/Salah)]\nBacalah teks berikut dengan saksama!\n\nMenjaga Ketenteraman Hari Raya Nyepi di Desa Sejahtera\nSaat umat Hindu di Desa Sejahtera merayakan Hari Raya Nyepi, warga pemeluk agama lain secara sukarela membantu menjaga keamanan lingkungan desa dan mengurangi aktivitas bising di luar rumah. Kesepakatan pengamanan lingkungan tersebut sebelumnya telah dibahas bersama dalam rapat koordinasi desa yang dihadiri seluruh tokoh agama dan perangkat desa. Suasana desa berlangsung damai, aman, dan penuh rasa saling menghormati.",
+        "teks": "Telaahlah keterhubungan sila-sila Pancasila pada Teks 13! Tentukan BENAR atau SALAH pada setiap pernyataan berikut!",
+        "pernyataan": [
+          "Sikap warga non-Hindu yang menjaga ketenangan saat umat Hindu menjalankan Catur Brata Penyepian membuktikan bahwa penghormatan Sila ke-1 memperkuat persatuan Sila ke-3.",
+          "Rapat koordinasi lintas tokoh agama (Sila ke-4) menjadi sarana untuk menjamin rasa aman dan keadilan bagi seluruh warga desa dalam menjalankan keyakinannya (Sila ke-2 & Sila ke-5).",
+          "Pengamalan Pancasila dalam masyarakat majemuk cukup dilakukan dengan tidak mengganggu orang lain tanpa perlu bekerja sama dalam kegiatan sosial."
+        ],
+        "kunci": ["B", "B", "S"],
+        "bobot": 6
+      }
+    ];
+
+    const defaultPesertaCSV = [
+      { "id": "PP 01001", "nama": "ABDILLAH YANN ADABY" },
+      { "id": "PP 01002", "nama": "AHMAD MADED SYAFI" },
+      { "id": "PP 01003", "nama": "ANDIKA OKTA ALFARIZI" },
+      { "id": "PP 01004", "nama": "AQILA KAUREN FITRIANI" },
+      { "id": "PP 01005", "nama": "ARIKA LUTFINA USKUNI" },
+      { "id": "PP 01006", "nama": "AZHAYLA CAHYA DEWANTARI" },
+      { "id": "PP 01007", "nama": "BILQIS MARSHA HANINA" },
+      { "id": "PP 01008", "nama": "DIANTA OKTAVIANO PURWANTO" },
+      { "id": "PP 01009", "nama": "DWI ADITYA ARDHANI" },
+      { "id": "PP 01010", "nama": "FAJAR UMAR BUCHORI" },
+      { "id": "PP 01011", "nama": "FARADISIL JINAN" },
+      { "id": "PP 01012", "nama": "FARAH KHANZA AZZAHRA" },
+      { "id": "PP 01013", "nama": "HASIR MUQOFFI MAULANA" },
+      { "id": "PP 01014", "nama": "MOH. DZIKRIL HAKIM" },
+      { "id": "PP 01015", "nama": "MOH. MIRZHA BIN MUKTI" },
+      { "id": "PP 01016", "nama": "MOH. ROMI FACHRUL ISLAM" },
+      { "id": "PP 01017", "nama": "MUH. NAUFAL" },
+      { "id": "PP 01018", "nama": "MUHAMMAD SYAIFUL AKBAR" },
+      { "id": "PP 01019", "nama": "MULAN JAMILA" },
+      { "id": "PP 01020", "nama": "MULYADI" },
+      { "id": "PP 01021", "nama": "NZ BAITIL IZZAH" },
+      { "id": "PP 01022", "nama": "QANITA TAQQIYA HABIBI" },
+      { "id": "PP 01023", "nama": "RANIA HUMAIROH ZIDNY" },
+      { "id": "PP 01024", "nama": "RISKY INDRA PRATAMA" },
+      { "id": "PP 01025", "nama": "SILFATUL MUKARROMAH" },
+      { "id": "PP 01026", "nama": "SITI GABYRILIA AZZAHRA SUBYANTORO" },
+      { "id": "PP 01027", "nama": "SITI NAJWA HANAN AZZAHRA" },
+      { "id": "PP 01028", "nama": "TSANY RAIHAN MUSTHAFA" },
+      { "id": "PP 01029", "nama": "ULAN NOVALIA EFENDI" },
+      { "id": "PP 01030", "nama": "WINA ALYA NABILA" },
+      { "id": "PP 01031", "nama": "ZEA MIRZANY ZAIN" },
+      { "id": "PP 01032", "nama": "Coba1" }
+    ];
+
+    let databaseSoal = JSON.parse(localStorage.getItem(STORAGE_KEYS.SOAL)) || JSON.parse(JSON.stringify(defaultSoal));
+    let dataPeserta = JSON.parse(localStorage.getItem(STORAGE_KEYS.PESERTA)) || JSON.parse(JSON.stringify(defaultPesertaCSV));
+    let dataHasil = JSON.parse(localStorage.getItem(STORAGE_KEYS.HASIL)) || [];
+    let pesertaAktif = null; let indexSoalAktif = 0; let jawabanPeserta = {};
+    let sisaWaktu = 60 * 60; let timerInterval = null;
+    let jumlahPelanggaranPindahTab = 0; const MAX_PELANGGARAN_PINDAH_TAB = 2; let sedangUjianAktif = false;
+
+    function saveLocalState() {
+      localStorage.setItem(STORAGE_KEYS.SOAL, JSON.stringify(databaseSoal));
+      localStorage.setItem(STORAGE_KEYS.PESERTA, JSON.stringify(dataPeserta));
+      localStorage.setItem(STORAGE_KEYS.HASIL, JSON.stringify(dataHasil));
+    }
+
+    // === PROTEKSI UJIAN & STATUS ===
+    document.addEventListener('visibilitychange', function() { if (sedangUjianAktif && document.visibilityState === 'hidden') catatPelanggaranPindahLayar(); });
+    window.addEventListener('blur', function() { if (sedangUjianAktif && document.visibilityState === 'visible') catatPelanggaranPindahLayar(); });
+    
+    function catatPelanggaranPindahLayar() {
+      if (!sedangUjianAktif) return;
+      jumlahPelanggaranPindahTab++;
+      document.getElementById('count-pelanggaran').innerText = jumlahPelanggaranPindahTab;
+      const badge = document.getElementById('badge-warning-pindah');
+      if (badge) badge.innerText = `Pindah Layar: ${jumlahPelanggaranPindahTab}/${MAX_PELANGGARAN_PINDAH_TAB}`;
+      if (jumlahPelanggaranPindahTab >= MAX_PELANGGARAN_PINDAH_TAB) {
+        sedangUjianAktif = false; 
+        alert(`🚨 PELANGGARAN MAKSIMAL! Ujian dihentikan paksa.`); 
+        prosesSelesaiUjian(true);
+      } else { 
+        alert(`⚠️ PERINGATAN (${jumlahPelanggaranPindahTab}/${MAX_PELANGGARAN_PINDAH_TAB})! Dilarang membuka tab/aplikasi lain saat ujian.`); 
+      }
+    }
+
+    async function cekStatusServer() {
+      try {
+        const info = await apiFetch('info');
+        isServerOnline = true;
+        document.getElementById('dot-server').className = 'w-2 h-2 rounded-full bg-emerald-400';
+        document.getElementById('text-server').innerText = `Online · ${dataPeserta.length} siswa`;
+      } catch (e) {
+        isServerOnline = false;
+        document.getElementById('dot-server').className = 'w-2 h-2 rounded-full bg-amber-400';
+        document.getElementById('text-server').innerText = `Lokal · ${dataPeserta.length} siswa`;
+      }
+    }
+
+    async function boot() {
+      updateLoginCount();
+      await initData();
+      cekStatusServer();
+      setInterval(cekStatusServer, 20000);
+    }
+    boot();
+
+    async function initData() {
+      try { 
+        const soal = await apiFetch('getSoal');
+        if (soal && soal.length) {
+          databaseSoal = soal;
+          localStorage.setItem(STORAGE_KEYS.SOAL, JSON.stringify(databaseSoal));
+        }
+        const pesertaServer = await apiFetch('getPeserta');
+        if (pesertaServer && pesertaServer.length) {
+          dataPeserta = pesertaServer;
+          localStorage.setItem(STORAGE_KEYS.PESERTA, JSON.stringify(dataPeserta));
+        }
+        updateLoginCount(); 
+      } catch (e) {
+        console.log('Menggunakan database lokal spreadsheet Pendidikan Pancasila Bab 1');
+        updateLoginCount();
+      }
+    }
+
+    function switchView(viewName) {
+      ['login','admin','exam','result'].forEach(v => document.getElementById(`view-${v}`).classList.add('hidden'));
+      document.getElementById('status-kecurangan-bar').classList.add('hidden');
+      if (viewName !== 'exam') sedangUjianAktif = false;
+      document.getElementById(`view-${viewName}`).classList.remove('hidden');
+      if (viewName === 'login') updateLoginCount();
+      if (viewName === 'exam') document.getElementById('status-kecurangan-bar').classList.remove('hidden');
+    }
+    
+    function updateLoginCount() {
+      if (document.getElementById('login-count-peserta')) {
+        document.getElementById('login-count-peserta').innerText = dataPeserta.length;
+      }
+    }
+
+    // === FUNGSI ADMIN PANEL ===
+    function bukaModalPasswordAdmin() {
+      document.getElementById('modal-auth-admin').classList.remove('hidden');
+      document.getElementById('input-password-admin').value = '';
+      setTimeout(() => document.getElementById('input-password-admin').focus(), 100);
+    }
+    
+    function tutupModalPasswordAdmin() {
+      document.getElementById('modal-auth-admin').classList.add('hidden');
+    }
+    
+    function toggleAdminPassword() {
+      const input = document.getElementById('input-password-admin');
+      if (input.type === 'password') { input.type = 'text'; } else { input.type = 'password'; }
+    }
+
+    async function verifikasiPasswordAdmin(e) {
+      e.preventDefault();
+      const inputPass = document.getElementById('input-password-admin').value;
+      if (inputPass === PASSWORD_ADMIN) {
+        adminPassword = inputPass;
+        tutupModalPasswordAdmin();
+        switchView('admin');
+        await refreshAdminData();
+      } else {
+        alert('❌ Password Salah!');
+        document.getElementById('input-password-admin').value = '';
+      }
+    }
+
+    function logoutAdmin() {
+      adminPassword = '';
+      switchView('login');
+    }
+
+    async function refreshAdminData() {
+      try {
+        const pServer = await apiFetch('getPeserta');
+        const hServer = await apiFetch('getHasil');
+        if (pServer) dataPeserta = pServer;
+        if (hServer) dataHasil = hServer;
+        saveLocalState();
+      } catch (err) {
+        console.log('Memuat data dari penyimpanan lokal');
+      }
+      renderTabelAdmin();
+    }
+
+    function renderTabelAdmin() {
+      document.getElementById('count-peserta').innerText = dataPeserta.length;
+      document.getElementById('tabel-peserta').innerHTML = dataPeserta.map(p => `
+        <tr class="border-b hover:bg-slate-50">
+          <td class="p-2.5 font-mono text-xs">${p.id}</td><td class="p-2.5">${p.nama}</td>
+          <td class="p-2.5 text-center"><button onclick="hapusPeserta('${p.id}')" class="text-rose-600 hover:bg-rose-100 p-1.5 rounded">🗑️</button></td>
+        </tr>`).join('');
+      document.getElementById('tabel-hasil').innerHTML = dataHasil.map(h => `
+        <tr class="border-b hover:bg-slate-50">
+          <td class="p-2.5 font-mono text-xs">${h.id}</td><td class="p-2.5">${h.nama}</td>
+          <td class="p-2.5 text-center font-bold text-indigo-700">${h.skor}</td>
+          <td class="p-2.5 text-center text-xs text-slate-500">${h.waktu}</td>
+          <td class="p-2.5 text-center"><button onclick="hapusHasil('${h.id}')" class="text-rose-600 hover:bg-rose-100 p-1.5 rounded">🗑️</button></td>
+        </tr>`).join('');
+    }
+
+    async function tambahPeserta(e) {
+      e.preventDefault();
+      const id = document.getElementById('admin-id').value.trim().toUpperCase();
+      const nama = document.getElementById('admin-nama').value.trim();
+      const idx = dataPeserta.findIndex(p => p.id.toUpperCase() === id);
+      if (idx > -1) dataPeserta[idx].nama = nama;
+      else dataPeserta.push({ id, nama });
+      saveLocalState();
+      try { await apiFetch('addPeserta', { id, nama }); } catch (err) {}
+      document.getElementById('form-tambah-peserta').reset();
+      renderTabelAdmin();
+      updateLoginCount();
+      alert('Peserta berhasil ditambahkan/diperbarui');
+    }
+
+    function handleUploadExcel(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async function(evt) {
+        const wb = XLSX.read(evt.target.result, { type: 'binary' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+        const newPeserta = [];
+        rows.forEach((r, i) => {
+          if (r.length >= 2 && r[0] && r[1]) {
+            const idStr = String(r[0]).trim().toUpperCase();
+            if (i === 0 && (idStr === 'ID' || idStr === 'NO')) return;
+            newPeserta.push({ id: idStr, nama: String(r[1]).trim() });
+          }
+        });
+        if (newPeserta.length > 0) {
+          dataPeserta = newPeserta;
+          saveLocalState();
+          try { await apiFetch('syncPeserta', { peserta: newPeserta }); } catch (err) {}
+          renderTabelAdmin();
+          updateLoginCount();
+          alert(`${newPeserta.length} peserta berhasil diimpor.`);
+        }
+      };
+      reader.readAsBinaryString(file);
+    }
+
+    async function prosesPastePeserta() {
+      const text = document.getElementById('paste-peserta').value;
+      if(!text.trim()) return alert('Teks kosong');
+      const lines = text.split('\n'); const newPeserta = [];
+      lines.forEach(line => {
+        const parts = line.split(',');
+        if(parts.length >= 2) newPeserta.push({ id: parts[0].trim().toUpperCase(), nama: parts[1].trim() });
+      });
+      if(newPeserta.length > 0) {
+        newPeserta.forEach(np => {
+          const idx = dataPeserta.findIndex(p => p.id.toUpperCase() === np.id);
+          if (idx > -1) dataPeserta[idx].nama = np.nama;
+          else dataPeserta.push(np);
+        });
+        saveLocalState();
+        try { await apiFetch('syncPeserta', { peserta: dataPeserta }); } catch (err) {}
+        document.getElementById('paste-peserta').value = '';
+        renderTabelAdmin();
+        updateLoginCount();
+        alert(`${newPeserta.length} peserta diimpor.`);
+      }
+    }
+
+    async function muatPesertaDefaultCSV() {
+      if(!confirm('Muat 32 data peserta default dari Spreadsheet Pendidikan Pancasila Bab 1?')) return;
+      dataPeserta = JSON.parse(JSON.stringify(defaultPesertaCSV));
+      saveLocalState();
+      try { await apiFetch('syncPeserta', { peserta: dataPeserta }); } catch (err) {}
+      renderTabelAdmin();
+      updateLoginCount();
+      alert('32 Peserta default berhasil dimuat.');
+    }
+
+    async function hapusPeserta(id) {
+      if(confirm(`Hapus peserta ${id}?`)) {
+        dataPeserta = dataPeserta.filter(p => p.id !== id);
+        saveLocalState();
+        try { await apiFetch('deletePeserta', { id }); } catch(err) {}
+        renderTabelAdmin();
+        updateLoginCount();
+      }
+    }
+    async function hapusSemuaPeserta() {
+      if(confirm('YAKIN hapus SEMUA peserta?')) {
+        dataPeserta = [];
+        saveLocalState();
+        try { await apiFetch('clearPeserta'); } catch(err) {}
+        renderTabelAdmin();
+        updateLoginCount();
+      }
+    }
+    async function hapusHasil(id) {
+      if(confirm(`Hapus hasil ${id}?`)) {
+        dataHasil = dataHasil.filter(h => h.id !== id);
+        saveLocalState();
+        try { await apiFetch('deleteHasil', { id }); } catch(err) {}
+        renderTabelAdmin();
+      }
+    }
+    async function hapusSemuaHasil() {
+      if(confirm('YAKIN hapus SEMUA hasil?')) {
+        dataHasil = [];
+        saveLocalState();
+        try { await apiFetch('clearHasil'); } catch(err) {}
+        renderTabelAdmin();
+      }
+    }
+    async function resetSemuaData() {
+      if(confirm('⚠️ BAHAYA: Reset seluruh sistem ke bawaan Spreadsheet PANCASILA01 (Peserta, Hasil, Soal)?')) {
+        dataPeserta = JSON.parse(JSON.stringify(defaultPesertaCSV));
+        databaseSoal = JSON.parse(JSON.stringify(defaultSoal));
+        dataHasil = [];
+        saveLocalState();
+        try { await apiFetch('resetAll'); } catch(err) {}
+        renderTabelAdmin();
+        updateLoginCount();
+        alert('Sistem di-reset ke database awal PANCASILA01');
+      }
+    }
+
+    function exportHasilKeExcel() {
+      if(dataHasil.length === 0) return alert('Tidak ada data hasil');
+      const ws = XLSX.utils.json_to_sheet(dataHasil); const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Hasil_Ujian");
+      XLSX.writeFile(wb, "Rekap_Hasil_PANCASILA01.xlsx");
+    }
+
+    // === EDIT SOAL ===
+    function bukaModalEditSoal() {
+      document.getElementById('modal-edit-soal').classList.remove('hidden');
+      const select = document.getElementById('select-nomor-soal');
+      select.innerHTML = databaseSoal.map((s, i) => `<option value="${i}">Soal ${i + 1} (${s.tipe.toUpperCase()} - Bobot ${s.bobot})</option>`).join('');
+      muatFormEditorSoal();
+    }
+    function tutupModalEditSoal() { document.getElementById('modal-edit-soal').classList.add('hidden'); }
+    
+    function muatFormEditorSoal() {
+      const idx = document.getElementById('select-nomor-soal').value;
+      const soal = databaseSoal[idx];
+      document.getElementById('edit-teks-soal').value = soal.teks || '';
+      document.getElementById('edit-stimulus-soal').value = (soal.tipe === 'bs' ? soal.konteks : soal.stimulus) || '';
+
+      const wrapper = document.getElementById('wrapper-opsi-inputs');
+      if(soal.tipe === 'pg') {
+        wrapper.innerHTML = soal.opsi.map((op, i) => `
+          <div class="flex items-center gap-2">
+            <input type="radio" name="edit-kunci-pg" value="${i}" ${soal.kunci === i ? 'checked' : ''} class="w-4 h-4">
+            <input type="text" id="edit-opsi-${i}" value="${op.replace(/"/g, '&quot;')}" class="w-full border p-2 rounded text-sm">
+          </div>`).join('');
+      } else if (soal.tipe === 'pgk') {
+        wrapper.innerHTML = soal.opsi.map((op, i) => `
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="edit-kunci-pgk-${i}" ${soal.kunci.includes(i) ? 'checked' : ''} class="w-4 h-4">
+            <input type="text" id="edit-opsi-${i}" value="${op.replace(/"/g, '&quot;')}" class="w-full border p-2 rounded text-sm">
+          </div>`).join('');
+      } else if (soal.tipe === 'bs') {
+        wrapper.innerHTML = soal.pernyataan.map((p, i) => `
+          <div class="flex items-center gap-2">
+            <select id="edit-kunci-bs-${i}" class="border p-2 rounded text-sm font-bold"><option value="B" ${soal.kunci[i] === 'B' ? 'selected' : ''}>Benar</option><option value="S" ${soal.kunci[i] === 'S' ? 'selected' : ''}>Salah</option></select>
+            <input type="text" id="edit-pernyataan-${i}" value="${p.replace(/"/g, '&quot;')}" class="w-full border p-2 rounded text-sm">
+          </div>`).join('');
+      }
+    }
+
+    async function simpanPerubahanSoal(e) {
+      e.preventDefault();
+      const idx = document.getElementById('select-nomor-soal').value;
+      const soal = databaseSoal[idx];
+      soal.teks = document.getElementById('edit-teks-soal').value;
+      const stimVal = document.getElementById('edit-stimulus-soal').value;
+      
+      if(soal.tipe === 'bs') {
+        soal.konteks = stimVal;
+        soal.pernyataan.forEach((_, i) => {
+          soal.pernyataan[i] = document.getElementById(`edit-pernyataan-${i}`).value;
+          soal.kunci[i] = document.getElementById(`edit-kunci-bs-${i}`).value;
+        });
+      } else {
+        soal.stimulus = stimVal;
+        soal.opsi.forEach((_, i) => { soal.opsi[i] = document.getElementById(`edit-opsi-${i}`).value; });
+        if(soal.tipe === 'pg') {
+          const radios = document.getElementsByName('edit-kunci-pg');
+          for(let r of radios) if(r.checked) soal.kunci = parseInt(r.value);
+        } else if (soal.tipe === 'pgk') {
+          const newKunci = [];
+          soal.opsi.forEach((_, i) => { if(document.getElementById(`edit-kunci-pgk-${i}`).checked) newKunci.push(i); });
+          soal.kunci = newKunci;
+        }
+      }
+      saveLocalState();
+      try { await apiFetch('syncSoal', { soal: databaseSoal }); alert('Soal berhasil diperbarui!'); tutupModalEditSoal(); } 
+      catch(err) { alert('Soal berhasil disimpan di penyimpanan lokal!'); tutupModalEditSoal(); }
+    }
+
+    async function resetSoalDefault() {
+      if(!confirm('Kembalikan semua soal ke bawaan Spreadsheet PANCASILA01?')) return;
+      databaseSoal = JSON.parse(JSON.stringify(defaultSoal));
+      saveLocalState();
+      try { await apiFetch('syncSoal', { soal: databaseSoal }); } catch(err) {}
+      alert('Soal berhasil di-reset ke database PANCASILA01.');
+      tutupModalEditSoal();
+    }
+
+    // === ENGINE UJIAN PESERTA ===
+    async function handleLoginPeserta(e) {
+      e.preventDefault();
+      const id = document.getElementById('login-id').value.trim().toUpperCase().replace(/\s+/g, ' ');
+      const nama = document.getElementById('login-nama').value.trim();
+      if (!id || !nama) return alert('Lengkapi data');
+
+      const ditemukan = dataPeserta.find(p => p.id.toUpperCase().replace(/\s+/g, ' ') === id);
+      if (ditemukan) {
+        if (ditemukan.nama.toUpperCase() !== nama.toUpperCase()) {
+          return alert(`❌ Nama tidak sesuai dengan ID ${id}!\nPastikan nama lengkap Anda benar.`);
+        }
+        pesertaAktif = { id: ditemukan.id, nama: ditemukan.nama };
+      } else {
+        try {
+          pesertaAktif = await apiFetch('login', { id, nama });
+        } catch (err) {
+          return alert(`❌ Login gagal! ID Peserta "${id}" tidak terdaftar dalam database.`);
+        }
+      }
+      
+      jawabanPeserta = {}; indexSoalAktif = 0; sisaWaktu = 60 * 60; jumlahPelanggaranPindahTab = 0;
+      document.getElementById('count-pelanggaran').innerText = '0';
+      document.getElementById('badge-warning-pindah').innerText = `Pindah Layar: 0/${MAX_PELANGGARAN_PINDAH_TAB}`;
+      sedangUjianAktif = true; switchView('exam'); renderNavigasi(); tampilkanSoal(); startTimer();
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        sisaWaktu--;
+        const m = Math.floor(sisaWaktu / 60).toString().padStart(2, '0');
+        const s = (sisaWaktu % 60).toString().padStart(2, '0');
+        document.getElementById('timer').innerText = `Sisa Waktu: ${m}:${s}`;
+        if (sisaWaktu <= 0) { clearInterval(timerInterval); alert('Waktu habis!'); prosesSelesaiUjian(); }
+      }, 1000);
+    }
+
+    function formatStimulusHTML(rawText) {
+      if (!rawText) return '';
+      const lines = rawText.split('\n');
+      const header = lines[0];
+      const body = lines.slice(1).join('<br>');
+      return `<div class="bg-amber-50/80 p-4 rounded-xl border border-amber-200 text-sm mb-4 space-y-2">
+        <strong class="text-amber-900 block border-b border-amber-200 pb-1">📖 ${header}</strong>
+        <div class="text-slate-700 leading-relaxed">${body}</div>
+      </div>`;
+    }
+
+    function tampilkanSoal() {
+      const soal = databaseSoal[indexSoalAktif];
+      document.getElementById('label-nomor').innerText = `Soal ${indexSoalAktif + 1} dari ${databaseSoal.length}`;
+      const c = document.getElementById('soal-container'); c.innerHTML = '';
+      if (soal.tipe === 'pg') {
+        document.getElementById('label-tipe').innerText = 'Pilihan Ganda';
+        c.innerHTML = `${formatStimulusHTML(soal.stimulus)}
+          <p class="font-semibold text-slate-800 text-base leading-relaxed whitespace-pre-line">${soal.teks}</p>
+          <div class="space-y-2.5 mt-4">
+            ${soal.opsi.map((o, i) => `<label class="flex items-start space-x-3 p-3.5 rounded-xl border ${jawabanPeserta[soal.id] === i ? 'bg-indigo-50 border-indigo-400' : 'hover:bg-slate-50'} cursor-pointer transition" onclick="jawabanPeserta[${soal.id}] = ${i}; tampilkanSoal();">
+                <input type="radio" name="j-${soal.id}" ${jawabanPeserta[soal.id] === i ? 'checked' : ''} class="w-4 h-4 mt-1 text-indigo-600"><span class="text-sm leading-relaxed"><strong>${String.fromCharCode(97+i).toUpperCase()}.</strong> ${o}</span></label>`).join('')}</div>`;
+      } else if (soal.tipe === 'pgk') {
+        document.getElementById('label-tipe').innerText = 'Pilihan Ganda Kompleks (Pilih 2 Jawaban)';
+        const ca = jawabanPeserta[soal.id] || [];
+        c.innerHTML = `${formatStimulusHTML(soal.stimulus)}
+          <p class="font-semibold text-slate-800 text-base leading-relaxed whitespace-pre-line">${soal.teks}</p>
+          <div class="space-y-2.5 mt-4">
+            ${soal.opsi.map((o, i) => `<label class="flex items-start space-x-3 p-3.5 rounded-xl border ${ca.includes(i) ? 'bg-indigo-50 border-indigo-400' : 'hover:bg-slate-50'} cursor-pointer transition" onclick="simpanPGK(${soal.id}, ${i})">
+                <input type="checkbox" ${ca.includes(i) ? 'checked' : ''} class="w-4 h-4 mt-1 text-indigo-600 rounded"><span class="text-sm leading-relaxed"><strong>${String.fromCharCode(97+i).toUpperCase()}.</strong> ${o}</span></label>`).join('')}</div>`;
+      } else if (soal.tipe === 'bs') {
+        document.getElementById('label-tipe').innerText = 'Paket Benar / Salah (3 Pernyataan)';
+        const ca = jawabanPeserta[soal.id] || {};
+        c.innerHTML = `${formatStimulusHTML(soal.konteks)}
+          <p class="font-semibold text-slate-800 text-base leading-relaxed mb-3">${soal.teks || 'Tentukan BENAR atau SALAH untuk setiap pernyataan berikut!'}</p>
+          <div class="space-y-3">${soal.pernyataan.map((p, i) => `
+              <div class="p-3.5 border border-slate-200 rounded-xl flex justify-between items-center gap-4 bg-slate-50">
+                <span class="text-sm font-medium text-slate-700 leading-relaxed">${i+1}. ${p}</span>
+                <div class="flex space-x-4 shrink-0"><label class="cursor-pointer text-emerald-700 font-bold text-xs flex flex-col items-center"><input type="radio" name="bs-${soal.id}-${i}" onchange="simpanBS(${soal.id}, ${i}, 'B')" ${ca[i] === 'B' ? 'checked' : ''}> BENAR</label>
+                  <label class="cursor-pointer text-rose-700 font-bold text-xs flex flex-col items-center"><input type="radio" name="bs-${soal.id}-${i}" onchange="simpanBS(${soal.id}, ${i}, 'S')" ${ca[i] === 'S' ? 'checked' : ''}> SALAH</label>
+                </div></div>`).join('')}</div>`;
+      }
+      document.getElementById('btn-prev').disabled = indexSoalAktif === 0;
+      if (indexSoalAktif === databaseSoal.length - 1) { document.getElementById('btn-next').classList.add('hidden'); document.getElementById('btn-finish').classList.remove('hidden'); } 
+      else { document.getElementById('btn-next').classList.remove('hidden'); document.getElementById('btn-finish').classList.add('hidden'); }
+      renderNavigasi();
+    }
+
+    function simpanPGK(soalId, i) { if (!jawabanPeserta[soalId]) jawabanPeserta[soalId] = []; const arr = jawabanPeserta[soalId]; const pos = arr.indexOf(i); if (pos > -1) arr.splice(pos, 1); else arr.push(i); if (arr.length === 0) delete jawabanPeserta[soalId]; tampilkanSoal(); }
+    function simpanBS(soalId, pi, v) { if (!jawabanPeserta[soalId]) jawabanPeserta[soalId] = {}; jawabanPeserta[soalId][pi] = v; renderNavigasi(); }
+    function prevSoal() { if (indexSoalAktif > 0) { indexSoalAktif--; tampilkanSoal(); } }
+    function nextSoal() { if (indexSoalAktif < databaseSoal.length - 1) { indexSoalAktif++; tampilkanSoal(); } }
+    function lompatKeSoal(i) { indexSoalAktif = i; tampilkanSoal(); }
+    function renderNavigasi() { document.getElementById('grid-navigasi').innerHTML = databaseSoal.map((s, idx) => `<button onclick="lompatKeSoal(${idx})" class="w-full h-10 rounded-lg font-bold text-xs border ${idx === indexSoalAktif ? 'ring-2 ring-indigo-600' : ''} ${(jawabanPeserta[s.id] !== undefined && (Array.isArray(jawabanPeserta[s.id]) ? jawabanPeserta[s.id].length > 0 : Object.keys(jawabanPeserta[s.id]).length > 0) || typeof jawabanPeserta[s.id] === 'number') ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 border-slate-300 text-slate-700'}">${idx + 1}</button>`).join(''); }
+
+    function konfirmasiSelesai() { if(confirm('Yakin kirim jawaban dan mengakhiri ujian? Pastikan semua nomor sudah terjawab.')) prosesSelesaiUjian(); }
+    
+    function tentukanPredikatKKTP(nilai) {
+      if (nilai >= 86) return 'Sangat Baik (Mahir)';
+      if (nilai >= 71) return 'Baik (Cakap)';
+      if (nilai >= 56) return 'Cukup (Layak — Perlu Bimbingan Sebagian)';
+      return 'Perlu Bimbingan Intensif (Belum Mencapai KKTP)';
+    }
+
+    async function prosesSelesaiUjian(isForced = false) {
+      sedangUjianAktif = false; clearInterval(timerInterval);
+      // Penilaian sesuai Rubrik Kognitif Spreadsheet Pendidikan Pancasila Bab 1:
+      // PG (No 1-15): bobot 2 (total 30)
+      // PGK MCMA (No 16-25): bobot 4 (2 benar = 4, 1 benar tanpa salah = 2, ada salah/kosong = 0) (total 40)
+      // Paket Benar/Salah (No 26-30): bobot 6 (3 benar = 6, 2 benar = 4, 1 benar = 2, 0 benar = 0) (total 30)
+      let skor = 0;
+      databaseSoal.forEach(s => {
+        const bobot = s.bobot || (s.tipe === 'pg' ? 2 : s.tipe === 'pgk' ? 4 : 6);
+        const jawab = jawabanPeserta[s.id];
+        if (jawab === undefined || jawab === null) return;
+        if (s.tipe === 'pg') {
+          if (jawab === s.kunci) skor += bobot;
+        } else if (s.tipe === 'pgk') {
+          if (Array.isArray(jawab) && jawab.length > 0) {
+            const adaSalah = jawab.some(j => !s.kunci.includes(j));
+            if (!adaSalah) {
+              const jumlahBenar = jawab.filter(j => s.kunci.includes(j)).length;
+              if (jumlahBenar === s.kunci.length) skor += bobot;
+              else if (jumlahBenar > 0) skor += (bobot / 2);
+            }
+          }
+        } else if (s.tipe === 'bs') {
+          let bc = 0;
+          s.kunci.forEach((k, i) => { if (jawab[i] === k) bc++; });
+          skor += (bc / s.kunci.length) * bobot;
+        }
+      });
+      const nilai = Math.round(skor);
+      const waktuSelesai = new Date().toLocaleTimeString('id-ID');
+      const hasilBaru = { id: pesertaAktif.id, nama: pesertaAktif.nama, skor: nilai, waktu: waktuSelesai };
+      
+      const idxHasil = dataHasil.findIndex(h => h.id === pesertaAktif.id);
+      if (idxHasil > -1) dataHasil[idxHasil] = hasilBaru;
+      else dataHasil.push(hasilBaru);
+      saveLocalState();
+
+      try { await apiFetch('addHasil', hasilBaru); } catch (err) {}
+      document.getElementById('teks-hasil').innerText = isForced ? `Ujian dihentikan paksa karena melanggar aturan. Terima kasih.` : `Terima kasih ${pesertaAktif.nama} (${pesertaAktif.id}), asesmen selesai.`;
+      document.getElementById('nilai-akhir').innerText = nilai;
+      document.getElementById('predikat-akhir').innerText = `Predikat KKTP: ${tentukanPredikatKKTP(nilai)}`;
+      switchView('result');
+    }
+  </script>
+</body>
+</html>
